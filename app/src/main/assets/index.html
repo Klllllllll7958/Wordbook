@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词本</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 主内容区域 -->
+    <main class="main-content">
+        <!-- API配置区域 (设置页面) -->
+        <section class="section hidden" id="settings-section">
+            <div class="section-header">
+                <h2>设置</h2>
+            </div>
+            
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h3>百度翻译API配置</h3>
+                    <p class="settings-description">配置百度翻译API以使用自动翻译功能</p>
+                </div>
+                
+                <div class="api-config-form">
+                    <div class="form-group">
+                        <label for="appid-input" class="form-label">App ID</label>
+                        <input type="text" id="appid-input" placeholder="输入百度翻译App ID" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appkey-input" class="form-label">App Key</label>
+                        <input type="password" id="appkey-input" placeholder="输入百度翻译App Key" class="form-input">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button id="save-api-btn" class="btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="17 21 17 13 7 13 7 21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="7 3 7 8 15 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            保存配置
+                        </button>
+                        <button id="clear-api-btn" class="btn-secondary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            清除配置
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="api-status" class="api-status"></div>
+                
+                <div class="api-help">
+                    <h4>如何获取百度翻译API密钥？</h4>
+                    <ol>
+                        <li>访问 <a href="https://fanyi-api.baidu.com/" target="_blank">百度翻译开放平台</a></li>
+                        <li>注册并登录账号</li>
+                        <li>进入管理控制台，创建应用</li>
+                        <li>获取App ID和App Key</li>
+                        <li>将密钥填入上方输入框并保存</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+        
+
+        <!-- 词组卡片区域 -->
+        <section class="section" id="articles-section">
+            <div class="section-header">
+                <h2>我的词组</h2>
+                <button id="add-article-btn" class="btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    添加词组
+                </button>
+            </div>
+            <div id="articles-list" class="articles-list">
+                <!-- 词组卡片将显示在这里 -->
+            </div>
+        </section>
+
+        <!-- 单词本区域 -->
+        <section class="section hidden" id="wordbook-section">
+            <div class="section-header">
+                <div class="section-header-content">
+                    <h2>我的单词</h2>
+                    <p id="wordbook-count" class="wordbook-count">共有0张卡片</p>
+                </div>
+                <button id="wordbook-add-btn" class="btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    添加单词
+                </button>
+            </div>
+            <div id="wordbook-list" class="wordbook-list">
+                <!-- 单词列表将显示在这里 -->
+            </div>
+        </section>
+
+        <!-- 词组输入模态框 -->
+        <div class="modal hidden" id="article-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>添加词组</h3>
+                    <button id="close-modal-btn" class="close-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- 文章添加表单 -->
+                    <div id="article-form">
+                        <input type="text" id="article-title-input" placeholder="文章标题" class="article-title">
+                        <textarea id="article-input" placeholder="请输入要阅读的文章..."></textarea>
+                        <button id="process-btn" class="btn-primary">处理文章</button>
+                        
+                        <div id="word-display" class="word-display hidden">
+                            <!-- 分割后的单词将显示在这里 -->
+                        </div>
+                        
+                        <p class="hint">提示：点击单词进行选择，选中的单词会变色</p>
+                        <p class="count">已选中单词数：<span id="selected-count">0</span></p>
+                        <button id="save-article-btn" class="btn-primary">保存文章和单词</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 单词详情模态框 -->
+        <div class="modal hidden" id="word-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>单词详情</h3>
+                    <button id="close-word-modal-btn" class="close-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="word-input" placeholder="输入单词">
+                    <input type="text" id="meaning-input" placeholder="输入释义">
+                    <div class="word-modal-actions">
+                        <button id="save-word-btn" class="btn-primary">保存单词</button>
+                        <button id="finish-adding-btn" class="btn-secondary">结束添加</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加词组选项模态框 -->
+        <div class="modal hidden" id="add-article-options-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>添加词组</h3>
+                    <button id="close-options-modal-btn" class="close-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="add-options">
+                        <button id="add-article-option-btn" class="btn-secondary add-option-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="14 2 14 8 20 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <line x1="16" y1="13" x2="8" y2="13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <line x1="16" y1="17" x2="8" y2="17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="10 9 9 9 8 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>添加文章</span>
+                        </button>
+                        <button id="add-word-to-article-option-btn" class="btn-secondary add-option-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 17l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>添加单词</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 词组标题输入模态框 -->
+        <div class="modal hidden" id="article-title-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>输入词组标题</h3>
+                    <button id="close-title-modal-btn" class="close-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="article-title-input-modal" placeholder="输入词组标题">
+                    <button id="save-title-btn" class="btn-primary">保存标题</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文章详情页面 -->
+        <section class="section hidden" id="article-detail-section">
+            <div class="section-header">
+                <button id="back-to-articles" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2 id="article-detail-title">词组详情</h2>
+                <div class="empty"></div>
+            </div>
+
+            <!-- 单词卡片区域 -->
+            <div class="vocabulary-card-container">
+                <div class="vocabulary-card" id="word-flashcard">
+                    <div class="vocabulary-card-content">
+                        <div class="vocabulary-card-word" id="flashcard-word"></div>
+                        <div class="vocabulary-card-meaning" id="flashcard-meaning"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 导航按钮 -->
+            <div class="vocabulary-navigation">
+                <button id="prev-word-btn" class="vocabulary-nav-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>上一个</span>
+                </button>
+                <button id="next-word-btn" class="vocabulary-nav-btn">
+                    <span>下一个</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 文章原文区域 -->
+            <div class="vocabulary-article">
+                <h3 class="vocabulary-article-title">原文</h3>
+                <div class="article-original" id="article-original-content">
+                    <!-- 文章原文将显示在这里，选中的单词会高亮 -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航 -->
+    <footer class="footer">
+        <nav class="nav">
+            <button class="nav-item active" data-page="home">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 6h8M8 10h8M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>词组</span>
+            </button>
+            <button class="nav-item" data-page="words">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>单词</span>
+            </button>
+            <button class="nav-item" data-page="settings">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>设置</span>
+            </button>
+        </nav>
+    </footer>
+
+    <script src="dictionary.js"></script>
+    <script src="translator.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
