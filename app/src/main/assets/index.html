@@ -17,19 +17,14 @@
             
             <div class="settings-card">
                 <div class="settings-card-header">
-                    <h3>百度翻译API配置</h3>
-                    <p class="settings-description">配置百度翻译API以使用自动翻译功能</p>
+                    <h3>DeepSeek AI 翻译配置</h3>
+                    <p class="settings-description">配置DeepSeek API密钥以使用AI智能翻译（返回词性+释义）</p>
                 </div>
-                
+
                 <div class="api-config-form">
                     <div class="form-group">
-                        <label for="appid-input" class="form-label">App ID</label>
-                        <input type="text" id="appid-input" placeholder="输入百度翻译App ID" class="form-input">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="appkey-input" class="form-label">App Key</label>
-                        <input type="password" id="appkey-input" placeholder="输入百度翻译App Key" class="form-input">
+                        <label for="apikey-input" class="form-label">API Key</label>
+                        <input type="password" id="apikey-input" placeholder="输入DeepSeek API Key" class="form-input">
                     </div>
                     
                     <div class="form-actions">
@@ -53,14 +48,17 @@
                 <div id="api-status" class="api-status"></div>
                 
                 <div class="api-help">
-                    <h4>如何获取百度翻译API密钥？</h4>
+                    <h4>如何获取DeepSeek API密钥？</h4>
                     <ol>
-                        <li>访问 <a href="https://fanyi-api.baidu.com/" target="_blank">百度翻译开放平台</a></li>
+                        <li>访问 <a href="https://platform.deepseek.com/" target="_blank">DeepSeek开放平台</a></li>
                         <li>注册并登录账号</li>
-                        <li>进入管理控制台，创建应用</li>
-                        <li>获取App ID和App Key</li>
+                        <li>进入API Keys管理页面</li>
+                        <li>创建新的API Key并复制</li>
                         <li>将密钥填入上方输入框并保存</li>
                     </ol>
+                    <p style="margin-top: 12px; color: #888; font-size: 13px;">
+                        💡 DeepSeek API价格低廉，新用户通常有免费额度。AI会智能返回单词的词性和中文释义。
+                    </p>
                 </div>
             </div>
         </section>
