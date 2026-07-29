@@ -9,7 +9,7 @@ class WordbookApp {
         this.isShowingMeaning = false;
         this.processedWords = [];
         
-        // 新增：当前正在创建的词组
+        // 新增：当前正在创建的文章
         this.currentCreatingArticle = null;
 
         // DOM 元素
@@ -31,14 +31,8 @@ class WordbookApp {
         this.saveArticleBtn = document.getElementById('save-article-btn');
         this.saveWordBtn = document.getElementById('save-word-btn');
         this.finishAddingBtn = document.getElementById('finish-adding-btn');
-        
-        // 添加词组选项模态框元素
-        this.addArticleOptionsModal = document.getElementById('add-article-options-modal');
-        this.closeOptionsModalBtn = document.getElementById('close-options-modal-btn');
-        this.addArticleOptionBtn = document.getElementById('add-article-option-btn');
-        this.addWordToArticleOptionBtn = document.getElementById('add-word-to-article-option-btn');
-        
-        // 词组标题输入模态框元素
+
+        // 文章标题输入模态框元素
         this.articleTitleModal = document.getElementById('article-title-modal');
         this.articleTitleInputModal = document.getElementById('article-title-input-modal');
         this.closeTitleModalBtn = document.getElementById('close-title-modal-btn');
@@ -111,7 +105,7 @@ class WordbookApp {
                     });
                     document.getElementById('articles-section').classList.remove('hidden');
                 } else if (page === 'articles') {
-                    // 从词组列表页面返回，应该让Android系统处理，这样点击两次返回键就会退出应用
+                    // 从文章列表页面返回，应该让Android系统处理，这样点击两次返回键就会退出应用
                 }
             }
         });
@@ -123,21 +117,16 @@ class WordbookApp {
         this.saveApiBtn.addEventListener('click', () => this.saveApiConfig());
         this.clearApiBtn.addEventListener('click', () => this.clearApiConfig());
         
-        // 词组相关按钮
-        this.addArticleBtn.addEventListener('click', () => this.openAddArticleOptionsModal());
+        // 文章相关按钮
+        this.addArticleBtn.addEventListener('click', () => this.openArticleModal());
         this.closeModalBtn.addEventListener('click', () => this.closeArticleModal());
         this.processBtn.addEventListener('click', () => this.processArticle());
         this.saveArticleBtn.addEventListener('click', () => this.saveArticle());
         
-        // 添加词组选项模态框事件
-        this.closeOptionsModalBtn.addEventListener('click', () => this.closeAddArticleOptionsModal());
-        this.addArticleOptionBtn.addEventListener('click', () => this.addArticleOption());
-        this.addWordToArticleOptionBtn.addEventListener('click', () => this.addWordToArticleOption());
-        
         // 结束添加按钮事件
         this.finishAddingBtn.addEventListener('click', () => this.finishAddingWords());
         
-        // 词组标题输入模态框事件
+        // 文章标题输入模态框事件
         this.closeTitleModalBtn.addEventListener('click', () => this.closeArticleTitleModal());
         this.saveTitleBtn.addEventListener('click', () => this.saveArticleTitle());
 
@@ -221,19 +210,19 @@ class WordbookApp {
         }
     }
 
-    // 打开词组模态框
+    // 打开文章模态框
     openArticleModal() {
         // 重置表单状态
         this.resetArticleModal();
         this.articleModal.classList.remove('hidden');
     }
 
-    // 关闭词组模态框
+    // 关闭文章模态框
     closeArticleModal() {
         this.articleModal.classList.add('hidden');
     }
 
-    // 重置词组模态框状态
+    // 重置文章模态框状态
     resetArticleModal() {
         // 重置文章表单
         this.articleTitleInput.value = '';
@@ -255,43 +244,22 @@ class WordbookApp {
         this.wordModal.classList.add('hidden');
     }
 
-    // 打开添加词组选项模态框
-    openAddArticleOptionsModal() {
-        this.addArticleOptionsModal.classList.remove('hidden');
-    }
-
-    // 关闭添加词组选项模态框
-    closeAddArticleOptionsModal() {
-        this.addArticleOptionsModal.classList.add('hidden');
-    }
-
-    // 添加文章选项
-    addArticleOption() {
-        this.closeAddArticleOptionsModal();
-        this.openArticleModal();
-    }
-
-    // 添加单词到词组选项
-    addWordToArticleOption() {
-        this.closeAddArticleOptionsModal();
-        this.openArticleTitleModal();
-    }
-
-    // 结束添加单词，生成新的词组或更新现有词组
+    // 打开添加文章选项模态框
+    // 结束添加单词，生成新的文章或更新现有文章
     finishAddingWords() {
-        // 检查是否正在创建词组
+        // 检查是否正在创建文章
         if (this.currentCreatingArticle) {
             // 检查是否添加了单词
             if (this.currentCreatingArticle.words.length > 0) {
-                // 检查是否是更新现有词组
+                // 检查是否是更新现有文章
                 const existingIndex = this.articles.findIndex(article => article.id === this.currentCreatingArticle.id);
                 
                 if (existingIndex !== -1) {
-                    // 更新现有词组
+                    // 更新现有文章
                     this.articles[existingIndex] = this.currentCreatingArticle;
                     this.saveArticles();
                     
-                    // 如果当前正在查看该词组，更新currentArticle
+                    // 如果当前正在查看该文章，更新currentArticle
                     if (this.currentArticle && this.currentArticle.id === this.currentCreatingArticle.id) {
                         this.currentArticle = this.currentCreatingArticle;
                         // 重新渲染单词卡片
@@ -302,9 +270,9 @@ class WordbookApp {
                     this.renderArticles();
                     
                     // 显示成功提示
-                    alert(`成功更新词组 "${this.currentCreatingArticle.title}"，现在包含 ${this.currentCreatingArticle.words.length} 个单词！`);
+                    alert(`成功更新文章 "${this.currentCreatingArticle.title}"，现在包含 ${this.currentCreatingArticle.words.length} 个单词！`);
                 } else {
-                    // 创建新词组
+                    // 创建新文章
                     this.articles.push(this.currentCreatingArticle);
                     this.saveArticles();
                     
@@ -312,11 +280,11 @@ class WordbookApp {
                     this.renderArticles();
                     
                     // 显示成功提示
-                    alert(`成功创建词组 "${this.currentCreatingArticle.title}"，包含 ${this.currentCreatingArticle.words.length} 个单词！`);
+                    alert(`成功创建文章 "${this.currentCreatingArticle.title}"，包含 ${this.currentCreatingArticle.words.length} 个单词！`);
                 }
             } else {
                 // 没有添加单词，显示提示
-                alert('请至少添加一个单词到词组中');
+                alert('请至少添加一个单词到文章中');
                 return;
             }
         }
@@ -328,34 +296,34 @@ class WordbookApp {
         this.closeWordModal();
     }
 
-    // 打开词组标题输入模态框
+    // 打开文章标题输入模态框
     openArticleTitleModal() {
         this.articleTitleInputModal.value = '';
         this.articleTitleModal.classList.remove('hidden');
     }
 
-    // 关闭词组标题输入模态框
+    // 关闭文章标题输入模态框
     closeArticleTitleModal() {
         this.articleTitleModal.classList.add('hidden');
     }
 
-    // 保存词组标题
+    // 保存文章标题
     saveArticleTitle() {
         const title = this.articleTitleInputModal.value.trim();
         
         if (!title) {
-            alert('请输入词组标题');
+            alert('请输入文章标题');
             return;
         }
         
-        // 初始化新的词组创建过程
+        // 初始化新的文章创建过程
         this.currentCreatingArticle = {
             id: Date.now().toString(),
             title: title,
             content: '',
             words: [],
             addedAt: new Date().toISOString(),
-            type: 'word' // 标记为单词添加的词组
+            type: 'word' // 标记为单词添加的文章
         };
         
         this.closeArticleTitleModal();
@@ -483,7 +451,7 @@ class WordbookApp {
                 content: content,
                 words: wordsToAdd,
                 addedAt: new Date().toISOString(),
-                type: 'article' // 标记为文章添加的词组
+                type: 'article' // 标记为文章添加的文章
             };
             
             this.articles.push(article);
@@ -531,9 +499,9 @@ class WordbookApp {
 
         this.addWordToWordbook(word, meaning);
         
-        // 如果正在创建词组，将单词添加到词组中
+        // 如果正在创建文章，将单词添加到文章中
         if (this.currentCreatingArticle) {
-            // 将单词添加到词组中
+            // 将单词添加到文章中
             this.currentCreatingArticle.words.push(word);
             
             // 清空输入框，方便继续添加单词
@@ -635,7 +603,7 @@ class WordbookApp {
             // 添加点击事件
             articleCard.addEventListener('click', () => this.openArticleDetail(article));
             
-            // 添加长按事件（删除词组）
+            // 添加长按事件（删除文章）
             let longPressTimer;
             articleCard.addEventListener('mousedown', (e) => {
                 // 添加长按动画类
@@ -690,12 +658,12 @@ class WordbookApp {
         });
     }
 
-    // 删除词组
+    // 删除文章
     deleteArticle(articleId) {
         // 显示自定义确认对话框
         this.showCustomConfirm(
-            '删除词组',
-            '确定要删除这个词组吗？此操作无法撤销。',
+            '删除文章',
+            '确定要删除这篇文章吗？此操作无法撤销。',
             () => {
                 // 确认删除
                 this.articles = this.articles.filter(article => article.id !== articleId);
@@ -1136,7 +1104,7 @@ class WordbookApp {
         const vocabularyArticle = document.querySelector('.vocabulary-article');
         const vocabularyActions = document.querySelector('.vocabulary-actions');
         
-        // 根据词组类型显示不同的界面
+        // 根据文章类型显示不同的界面
         if (this.currentArticle.type === 'word') {
             // 隐藏原文区域
             if (vocabularyArticle) {
@@ -1150,7 +1118,7 @@ class WordbookApp {
                     const actionsDiv = document.createElement('div');
                     actionsDiv.className = 'vocabulary-actions';
                     actionsDiv.innerHTML = `
-                        <button id="view-words-btn" class="vocabulary-action-btn btn-secondary">查看词组</button>
+                        <button id="view-words-btn" class="vocabulary-action-btn btn-secondary">查看文章</button>
                         <button id="add-word-to-article-btn" class="vocabulary-action-btn btn-primary">添加单词</button>
                     `;
                     navContainer.insertAdjacentElement('afterend', actionsDiv);
@@ -1215,7 +1183,7 @@ class WordbookApp {
         this.wordFlashcard.classList.toggle('show-meaning');
     }
 
-    // 查看词组中的所有单词
+    // 查看文章中的所有单词
     viewArticleWords() {
         if (!this.currentArticle) return;
         
@@ -1264,11 +1232,11 @@ class WordbookApp {
         });
     }
 
-    // 向词组添加单词
+    // 向文章添加单词
     addWordToArticle() {
         if (!this.currentArticle) return;
         
-        // 初始化词组创建过程，使用当前词组的信息
+        // 初始化文章创建过程，使用当前文章的信息
         this.currentCreatingArticle = {
             id: this.currentArticle.id,
             title: this.currentArticle.title,
