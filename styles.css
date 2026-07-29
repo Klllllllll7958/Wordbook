@@ -176,6 +176,66 @@ body {
     border-radius: 4px;
 }
 
+.section-body {
+    padding: 0 4px;
+}
+
+/* ========== 文章输入页面 ========== */
+#article-input-section {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px); /* 减去底部导航栏高度 */
+    margin-bottom: 0;
+}
+
+#article-input-section .section-header {
+    flex-shrink: 0;
+}
+
+#article-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 0 4px;
+    min-height: 0; /* 允许flex子元素收缩 */
+}
+
+#article-form .article-title {
+    flex: 0 0 auto;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+#article-form textarea {
+    flex: 1;
+    min-height: 0;
+    resize: none;
+    margin-bottom: 16px;
+}
+
+#process-btn {
+    flex-shrink: 0;
+    align-self: flex-end;
+}
+
+/* ========== 单词选择页面 ========== */
+#word-selection-section {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px);
+    margin-bottom: 0;
+}
+
+#word-selection-section .section-header {
+    flex-shrink: 0;
+}
+
+#save-article-btn {
+    flex-shrink: 0;
+    align-self: flex-end;
+}
+
+
 /* 按钮样式 */
 .btn-primary {
     background-color: var(--primary-color);
@@ -814,17 +874,20 @@ input[type="text"]:focus, input[type="password"]:focus {
     font-weight: 500;
 }
 
+/* 单词选择页面 */
+.word-selection-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
 /* 单词显示区域 */
 .word-display {
-    margin-top: 20px;
-    padding: 20px;
-    background-color: var(--background-color);
-    border-radius: var(--border-radius-sm);
+    flex: 1;
     line-height: 2.2;
-    max-height: 250px;
-    overflow-y: auto;
     margin-bottom: 20px;
-    border: 1px solid var(--border-color);
+    font-size: 15px;
 }
 
 .word {
@@ -854,31 +917,20 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* 提示和计数 */
 .hint {
-    font-style: italic;
     color: var(--text-secondary);
-    margin: 12px 0;
+    margin: 0 0 8px 0;
     font-size: 14px;
-    padding: 12px;
-    background-color: var(--background-color);
-    border-radius: var(--border-radius-sm);
-    border-left: 4px solid var(--accent-color);
 }
 
 .count {
-    margin: 12px 0 20px 0;
+    margin: 0 0 16px 0;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--primary-color);
     font-size: 15px;
-    padding: 12px;
-    background-color: var(--background-color);
-    border-radius: var(--border-radius-sm);
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 .count::before {
-    content: '📝';
+    content: '📝 ';
     font-size: 16px;
 }
 
@@ -1413,6 +1465,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     position: relative;
     overflow: hidden;
     border: 1px solid #e0e0e0;
+    -webkit-tap-highlight-color: transparent;
 }
 
 
@@ -1493,6 +1546,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .vocabulary-nav-btn:hover {

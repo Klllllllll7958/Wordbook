@@ -16,6 +16,8 @@ class WordbookApp {
         this.articleTitleInput = document.getElementById('article-title-input');
         this.articleInput = document.getElementById('article-input');
         this.processBtn = document.getElementById('process-btn');
+        this.wordSelectionSection = document.getElementById('word-selection-section');
+        this.backFromWordSelectionBtn = document.getElementById('back-from-word-selection');
         this.wordDisplay = document.getElementById('word-display');
         this.selectedCount = document.getElementById('selected-count');
         this.wordInput = document.getElementById('word-input');
@@ -24,18 +26,18 @@ class WordbookApp {
         this.wordbookList = document.getElementById('wordbook-list');
         this.articlesList = document.getElementById('articles-list');
         this.addArticleBtn = document.getElementById('add-article-btn');
-        this.articleModal = document.getElementById('article-modal');
-        this.wordModal = document.getElementById('word-modal');
-        this.closeModalBtn = document.getElementById('close-modal-btn');
-        this.closeWordModalBtn = document.getElementById('close-word-modal-btn');
+        this.articleInputSection = document.getElementById('article-input-section');
+        this.wordInputSection = document.getElementById('word-input-section');
+        this.backFromArticleInputBtn = document.getElementById('back-from-article-input');
+        this.backFromWordInputBtn = document.getElementById('back-from-word-input');
         this.saveArticleBtn = document.getElementById('save-article-btn');
         this.saveWordBtn = document.getElementById('save-word-btn');
         this.finishAddingBtn = document.getElementById('finish-adding-btn');
 
-        // 文章标题输入模态框元素
-        this.articleTitleModal = document.getElementById('article-title-modal');
+        // 文章标题输入页面元素
+        this.articleTitleSection = document.getElementById('article-title-section');
         this.articleTitleInputModal = document.getElementById('article-title-input-modal');
-        this.closeTitleModalBtn = document.getElementById('close-title-modal-btn');
+        this.backFromTitleInputBtn = document.getElementById('back-from-title-input');
         this.saveTitleBtn = document.getElementById('save-title-btn');
         
         // 文章添加相关DOM元素
@@ -119,15 +121,16 @@ class WordbookApp {
         
         // 文章相关按钮
         this.addArticleBtn.addEventListener('click', () => this.openArticleModal());
-        this.closeModalBtn.addEventListener('click', () => this.closeArticleModal());
+        this.backFromArticleInputBtn.addEventListener('click', () => this.closeArticleModal());
         this.processBtn.addEventListener('click', () => this.processArticle());
         this.saveArticleBtn.addEventListener('click', () => this.saveArticle());
+        this.backFromWordSelectionBtn.addEventListener('click', () => this.backFromWordSelection());
         
         // 结束添加按钮事件
         this.finishAddingBtn.addEventListener('click', () => this.finishAddingWords());
         
-        // 文章标题输入模态框事件
-        this.closeTitleModalBtn.addEventListener('click', () => this.closeArticleTitleModal());
+        // 文章标题输入页面事件
+        this.backFromTitleInputBtn.addEventListener('click', () => this.closeArticleTitleModal());
         this.saveTitleBtn.addEventListener('click', () => this.saveArticleTitle());
 
         // 单词相关按钮
@@ -137,7 +140,7 @@ class WordbookApp {
         if (this.wordbookAddBtn) {
             this.wordbookAddBtn.addEventListener('click', () => this.openWordModal());
         }
-        this.closeWordModalBtn.addEventListener('click', () => this.closeWordModal());
+        this.backFromWordInputBtn.addEventListener('click', () => this.closeWordModal());
         this.saveWordBtn.addEventListener('click', () => this.saveWord());
 
         // 单词输入框回车事件（自动翻译）
@@ -210,38 +213,48 @@ class WordbookApp {
         }
     }
 
-    // 打开文章模态框
+    // 打开文章输入页面
     openArticleModal() {
         // 重置表单状态
         this.resetArticleModal();
-        this.articleModal.classList.remove('hidden');
+        // 隐藏所有section和footer
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelector('.footer').classList.add('hidden');
+        // 显示文章输入页面
+        this.articleInputSection.classList.remove('hidden');
     }
 
-    // 关闭文章模态框
+    // 关闭文章输入页面（返回文章列表）
     closeArticleModal() {
-        this.articleModal.classList.add('hidden');
+        this.articleInputSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        this.switchPage('articles');
     }
 
-    // 重置文章模态框状态
+    // 重置文章输入表单
     resetArticleModal() {
-        // 重置文章表单
         this.articleTitleInput.value = '';
         this.articleInput.value = '';
-        this.wordDisplay.classList.add('hidden');
         this.selectedWords.clear();
         this.updateSelectedCount();
     }
 
-    // 打开单词模态框
+    // 打开单词输入页面
     openWordModal() {
         this.wordInput.value = '';
         this.meaningInput.value = '';
-        this.wordModal.classList.remove('hidden');
+        // 隐藏所有section和footer
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelector('.footer').classList.add('hidden');
+        // 显示单词输入页面
+        this.wordInputSection.classList.remove('hidden');
     }
 
-    // 关闭单词模态框
+    // 关闭单词输入页面（返回文章列表）
     closeWordModal() {
-        this.wordModal.classList.add('hidden');
+        this.wordInputSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        this.switchPage('articles');
     }
 
     // 打开添加文章选项模态框
@@ -296,15 +309,21 @@ class WordbookApp {
         this.closeWordModal();
     }
 
-    // 打开文章标题输入模态框
+    // 打开文章标题输入页面
     openArticleTitleModal() {
         this.articleTitleInputModal.value = '';
-        this.articleTitleModal.classList.remove('hidden');
+        // 隐藏所有section和footer
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelector('.footer').classList.add('hidden');
+        // 显示文章标题输入页面
+        this.articleTitleSection.classList.remove('hidden');
     }
 
-    // 关闭文章标题输入模态框
+    // 关闭文章标题输入页面（返回文章列表）
     closeArticleTitleModal() {
-        this.articleTitleModal.classList.add('hidden');
+        this.articleTitleSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        this.switchPage('articles');
     }
 
     // 保存文章标题
@@ -340,16 +359,25 @@ class WordbookApp {
 
         // 分割文章为单词
         this.processedWords = this.splitIntoWords(article);
-        
+
         // 渲染单词
         this.renderWords();
-        
-        // 显示单词显示区域
-        this.wordDisplay.classList.remove('hidden');
-        
+
         // 清空已选单词
         this.selectedWords.clear();
         this.updateSelectedCount();
+
+        // 跳转到单词选择页面
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        this.wordSelectionSection.classList.remove('hidden');
+    }
+
+    // 从单词选择页面返回文章输入页面
+    backFromWordSelection() {
+        this.wordSelectionSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        // 回到文章列表
+        this.switchPage('articles');
     }
 
     // 将文章分割为单词
@@ -457,8 +485,11 @@ class WordbookApp {
             this.articles.push(article);
             this.saveArticles();
 
-            // 关闭模态框
-            this.closeArticleModal();
+            // 关闭页面，返回文章列表
+            this.wordSelectionSection.classList.add('hidden');
+            this.articleInputSection.classList.add('hidden');
+            document.querySelector('.footer').classList.remove('hidden');
+            this.switchPage('articles');
             
             // 重新渲染
             this.renderArticles();

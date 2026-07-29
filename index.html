@@ -99,75 +99,88 @@
             </div>
         </section>
 
-        <!-- 文章输入模态框 -->
-        <div class="modal hidden" id="article-modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>添加文章</h3>
-                    <button id="close-modal-btn" class="close-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- 文章添加表单 -->
-                    <div id="article-form">
-                        <input type="text" id="article-title-input" placeholder="文章标题" class="article-title">
-                        <textarea id="article-input" placeholder="请输入要阅读的文章..."></textarea>
-                        <button id="process-btn" class="btn-primary">处理文章</button>
-                        
-                        <div id="word-display" class="word-display hidden">
-                            <!-- 分割后的单词将显示在这里 -->
-                        </div>
-                        
-                        <p class="hint">提示：点击单词进行选择，选中的单词会变色</p>
-                        <p class="count">已选中单词数：<span id="selected-count">0</span></p>
-                        <button id="save-article-btn" class="btn-primary">保存文章和单词</button>
-                    </div>
-                </div>
+        <!-- 文章输入页面 -->
+        <section class="section hidden" id="article-input-section">
+            <div class="section-header">
+                <button id="back-from-article-input" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2>添加文章</h2>
+                <div class="empty"></div>
             </div>
-        </div>
 
-        <!-- 单词详情模态框 -->
-        <div class="modal hidden" id="word-modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>单词详情</h3>
-                    <button id="close-word-modal-btn" class="close-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <input type="text" id="word-input" placeholder="输入单词">
-                    <input type="text" id="meaning-input" placeholder="输入释义">
-                    <div class="word-modal-actions">
-                        <button id="save-word-btn" class="btn-primary">保存单词</button>
-                        <button id="finish-adding-btn" class="btn-secondary">结束添加</button>
-                    </div>
-                </div>
+            <div id="article-form" class="section-body">
+                <input type="text" id="article-title-input" placeholder="文章标题" class="article-title">
+                <textarea id="article-input" placeholder="请输入要阅读的文章..."></textarea>
+                <button id="process-btn" class="btn-primary">处理文章</button>
             </div>
-        </div>
+        </section>
 
-        <!-- 文章标题输入模态框 -->
-        <div class="modal hidden" id="article-title-modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>输入文章标题</h3>
-                    <button id="close-title-modal-btn" class="close-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
+        <!-- 单词选择页面 -->
+        <section class="section hidden" id="word-selection-section">
+            <div class="section-header">
+                <button id="back-from-word-selection" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2>选择单词</h2>
+                <div class="empty"></div>
+            </div>
+
+            <div class="section-body word-selection-body">
+                <p class="hint">💡 点击单词进行选择，选中的单词会变色</p>
+                <p class="count">已选中 <span id="selected-count">0</span> 个单词</p>
+
+                <div id="word-display" class="word-display">
+                    <!-- 分割后的单词将显示在这里 -->
                 </div>
-                <div class="modal-body">
-                    <input type="text" id="article-title-input-modal" placeholder="输入文章标题">
-                    <button id="save-title-btn" class="btn-primary">保存标题</button>
+
+                <button id="save-article-btn" class="btn-primary">保存文章和单词</button>
+            </div>
+        </section>
+
+        <!-- 单词输入页面 -->
+        <section class="section hidden" id="word-input-section">
+            <div class="section-header">
+                <button id="back-from-word-input" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2>添加单词</h2>
+                <div class="empty"></div>
+            </div>
+
+            <div class="section-body">
+                <input type="text" id="word-input" placeholder="输入单词">
+                <input type="text" id="meaning-input" placeholder="输入释义">
+                <div class="word-modal-actions">
+                    <button id="save-word-btn" class="btn-primary">保存单词</button>
+                    <button id="finish-adding-btn" class="btn-secondary">结束添加</button>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- 文章标题输入页面 -->
+        <section class="section hidden" id="article-title-section">
+            <div class="section-header">
+                <button id="back-from-title-input" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2>输入文章标题</h2>
+                <div class="empty"></div>
+            </div>
+
+            <div class="section-body">
+                <input type="text" id="article-title-input-modal" placeholder="输入文章标题">
+                <button id="save-title-btn" class="btn-primary">保存标题</button>
+            </div>
+        </section>
 
         <!-- 文章详情页面 -->
         <section class="section hidden" id="article-detail-section">
