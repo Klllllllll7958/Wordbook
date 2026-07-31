@@ -8,6 +8,11 @@ class WordbookApp {
         this.currentMemoryIndex = -1;
         this.isShowingMeaning = false;
         this.processedWords = [];
+
+        // 复习页面状态
+        this.reviewWords = [];
+        this.currentReviewIndex = 0;
+        this.reviewedCount = 0;
         
         // 新增：当前正在创建的文章
         this.currentCreatingArticle = null;
@@ -56,6 +61,17 @@ class WordbookApp {
         
         // 单词本添加按钮
         this.wordbookAddBtn = document.getElementById('wordbook-add-btn');
+
+        // 复习页面元素
+        this.reviewSection = document.getElementById('review-section');
+        this.reviewFlashcard = document.getElementById('review-flashcard');
+        this.reviewWord = document.getElementById('review-word');
+        this.reviewMeaning = document.getElementById('review-meaning');
+        this.reviewProgress = document.getElementById('review-progress');
+        this.prevReviewBtn = document.getElementById('prev-review-btn');
+        this.nextReviewBtn = document.getElementById('next-review-btn');
+        this.backFromReviewBtn = document.getElementById('back-from-review');
+        this.reviewRatings = document.getElementById('review-ratings');
         
         // API配置相关DOM元素
         this.apiKeyInput = document.getElementById('apikey-input');
@@ -138,7 +154,7 @@ class WordbookApp {
             this.addWordBtn.addEventListener('click', () => this.openWordModal());
         }
         if (this.wordbookAddBtn) {
-            this.wordbookAddBtn.addEventListener('click', () => this.openWordModal());
+            this.wordbookAddBtn.addEventListener('click', () => this.startReview());
         }
         this.backFromWordInputBtn.addEventListener('click', () => this.closeWordModal());
         this.saveWordBtn.addEventListener('click', () => this.saveWord());
@@ -164,6 +180,21 @@ class WordbookApp {
         this.wordFlashcard.addEventListener('click', () => this.toggleFlashcard());
         this.prevWordBtn.addEventListener('click', () => this.prevWord());
         this.nextWordBtn.addEventListener('click', () => this.nextWord());
+
+        // 复习页面事件
+        this.backFromReviewBtn.addEventListener('click', () => this.backFromReview());
+        this.reviewFlashcard.addEventListener('click', () => this.toggleReviewFlashcard());
+        this.prevReviewBtn.addEventListener('click', () => this.prevReviewWord());
+        this.nextReviewBtn.addEventListener('click', () => this.nextReviewWord());
+
+        // 评分按钮事件
+        this.reviewRatings.querySelectorAll('.rating-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();  // 防止冒泡触发卡片翻转
+                const rating = parseInt(btn.dataset.rating);
+                this.rateCard(rating);
+            });
+        });
     }
 
     // 设置底部导航
@@ -859,7 +890,10 @@ class WordbookApp {
     loadWordbook() {
         try {
             const saved = localStorage.getItem('wordbook');
-            return saved ? JSON.parse(saved) : [];
+            const wordbook = saved ? JSON.parse(saved) : [];
+            // 向后兼容：为旧卡片初始化 FSRS 字段
+            wordbook.forEach(card => FSRS.initCard(card));
+            return wordbook;
         } catch (error) {
             console.error('加载单词本失败:', error);
             return [];
@@ -1292,9 +1326,184 @@ class WordbookApp {
     // 显示下一个单词
     nextWord() {
         if (this.shuffledWords.length === 0) return;
-        
+
         this.currentWordIndex = (this.currentWordIndex + 1) % this.shuffledWords.length;
         this.renderArticleDetail();
+    }
+
+    // ========== 复习页面方法 ==========
+
+    // 开始复习
+    startReview() {
+        if (this.wordbook.length === 0) {
+            alert('单词本为空，请先添加单词');
+            return;
+        }
+
+        // 确保所有卡片都有 FSRS 字段
+        this.wordbook.forEach(card => FSRS.initCard(card));
+
+        // 筛选到期需要复习的单词
+        this.reviewWords = this.wordbook.filter(card => FSRS.isDue(card));
+
+        if (this.reviewWords.length === 0) {
+            alert('暂无需要复习的单词，所有单词都还在记忆周期内。\n请稍后再来复习！');
+            return;
+        }
+
+        // 按紧迫度排序：R 越小（越可能忘记）越靠前
+        this.reviewWords.sort((a, b) => {
+            return FSRS.getRetrievability(a) - FSRS.getRetrievability(b);
+        });
+
+        this.currentReviewIndex = 0;
+        this.reviewedCount = 0;
+
+        // 隐藏所有section和footer，显示复习页面
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelector('.footer').classList.add('hidden');
+        this.reviewSection.classList.remove('hidden');
+
+        // 渲染第一张卡片
+        this.renderReviewCard();
+    }
+
+    // 返回单词本列表
+    backFromReview() {
+        this.reviewWords = [];
+        this.currentReviewIndex = 0;
+        this.reviewedCount = 0;
+
+        this.reviewSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        this.switchPage('words');
+    }
+
+    // 渲染复习卡片
+    renderReviewCard() {
+        if (this.reviewWords.length === 0) return;
+
+        const currentItem = this.reviewWords[this.currentReviewIndex];
+        const wordInfo = this.wordbook.find(
+            item => item.word.toLowerCase() === currentItem.word.toLowerCase()
+        );
+
+        this.reviewWord.textContent = currentItem.word;
+        this.reviewMeaning.textContent = wordInfo ? wordInfo.meaning : '无释义';
+
+        // 更新进度文字：已复习数 / 总数
+        this.reviewProgress.textContent =
+            `${this.reviewedCount + 1} / ${this.reviewWords.length + this.reviewedCount}`;
+
+        // 重置卡片为隐藏释义状态
+        this.reviewFlashcard.classList.remove('show-meaning');
+        this.reviewRatings.classList.add('hidden');
+
+        // 恢复导航按钮状态（可能被 showReviewComplete 修改过）
+        this.prevReviewBtn.style.display = '';
+        this.nextReviewBtn.querySelector('span').textContent = '下一个';
+        this.nextReviewBtn.querySelector('svg').style.display = '';
+    }
+
+    // 翻转复习卡片（同时显示/隐藏评分按钮）
+    toggleReviewFlashcard() {
+        var isShowing = this.reviewFlashcard.classList.toggle('show-meaning');
+        if (isShowing) {
+            this.reviewRatings.classList.remove('hidden');
+        } else {
+            this.reviewRatings.classList.add('hidden');
+        }
+    }
+
+    // 评分处理
+    rateCard(rating) {
+        if (this.reviewWords.length === 0) return;
+
+        var currentItem = this.reviewWords[this.currentReviewIndex];
+
+        // 在 wordbook 中找到对应卡片并更新
+        var card = this.wordbook.find(
+            item => item.word.toLowerCase() === currentItem.word.toLowerCase()
+        );
+        if (card) {
+            FSRS.schedule(card, rating, new Date());
+        }
+
+        // 如果点了"忘记"，把卡片重新加入队列尾部（同次会话再复习一次）
+        if (rating === 1) {
+            this.reviewWords.push(currentItem);
+        } else {
+            this.reviewedCount++;
+        }
+
+        // 从当前队列移除已评分的卡片
+        this.reviewWords.splice(this.currentReviewIndex, 1);
+
+        // 保存更新后的单词本
+        this.saveWordbook();
+
+        // 显示下一张卡片或完成
+        if (this.reviewWords.length === 0) {
+            this.showReviewComplete();
+        } else {
+            // 如果当前索引超出范围，回到开头
+            if (this.currentReviewIndex >= this.reviewWords.length) {
+                this.currentReviewIndex = 0;
+            }
+            this.renderReviewCard();
+        }
+    }
+
+    // 复习完成
+    showReviewComplete() {
+        this.reviewFlashcard.classList.remove('show-meaning');
+        this.reviewRatings.classList.add('hidden');
+
+        if (this.reviewedCount === 0) {
+            // 所有卡片都点了"忘记"
+            this.reviewWord.textContent = '继续加油';
+            this.reviewMeaning.textContent = '所有卡片都需要再复习，请稍后重试';
+            this.reviewProgress.textContent = '复习完成';
+
+            // 隐藏导航按钮
+            this.prevReviewBtn.style.display = 'none';
+            this.nextReviewBtn.style.display = 'none';
+        } else {
+            this.reviewWord.textContent = '复习完成！';
+            this.reviewMeaning.textContent =
+                '本次成功复习 ' + this.reviewedCount + ' 个单词';
+            this.reviewProgress.textContent = '复习完成';
+
+            // 把导航按钮改成返回按钮
+            this.prevReviewBtn.style.display = 'none';
+            this.nextReviewBtn.querySelector('span').textContent = '返回';
+            this.nextReviewBtn.querySelector('svg').style.display = 'none';
+        }
+    }
+
+    // 上一个复习单词
+    prevReviewWord() {
+        if (this.reviewWords.length === 0) return;
+
+        this.currentReviewIndex = (this.currentReviewIndex - 1 + this.reviewWords.length) % this.reviewWords.length;
+        this.renderReviewCard();
+    }
+
+    // 下一个复习单词
+    nextReviewWord() {
+        if (this.reviewWords.length === 0) return;
+
+        // 如果是"复习完成"状态，nextReviewBtn 变成了返回按钮
+        if (this.reviewProgress.textContent === '复习完成') {
+            this.prevReviewBtn.style.display = '';
+            this.nextReviewBtn.querySelector('span').textContent = '下一个';
+            this.nextReviewBtn.querySelector('svg').style.display = '';
+            this.backFromReview();
+            return;
+        }
+
+        this.currentReviewIndex = (this.currentReviewIndex + 1) % this.reviewWords.length;
+        this.renderReviewCard();
     }
 }
 

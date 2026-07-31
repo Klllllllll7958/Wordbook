@@ -126,7 +126,6 @@ Wordbook/
 ├── build.gradle.kts              # 根构建文件
 ├── settings.gradle.kts
 ├── proxy_server.py               # Python 开发代理（已废弃，DeepSeek 不再需要）
-├── server.js                     # Node.js 开发代理（已废弃，DeepSeek 不再需要）
 └── 使用指南.md                   # 用户使用文档
 ```
 
@@ -156,7 +155,7 @@ Wordbook/
 - DeepSeek API Key 需要用户自行在 [platform.deepseek.com](https://platform.deepseek.com) 注册获取，新用户通常有免费额度
 - 翻译批处理当前为串行执行，批量翻译大量单词时较慢，可改为 `Promise.all()` 并行化
 - 自动构建索引的代码尚未实现，当前需要手动管理单词的添加及复习进度
-- `proxy_server.py` 和 `server.js` 是为旧版百度翻译 API 设计的代理，升级到 DeepSeek 后已不再需要
+- `proxy_server.py` 是为旧版百度翻译 API 设计的代理，升级到 DeepSeek 后已不再需要
 
 ## 许可
 

@@ -1562,6 +1562,94 @@ input[type="text"]:focus, input[type="password"]:focus {
     stroke: #3498db;
 }
 
+/* 复习进度文字 */
+.review-progress-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* 复习评分按钮 */
+.review-ratings {
+    display: flex;
+    gap: 12px;
+    padding: 0 20px 20px;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.review-ratings.hidden {
+    display: none !important;
+}
+
+.rating-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 12px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.rating-btn:active {
+    transform: scale(0.95);
+}
+
+.rating-label {
+    font-size: 16px;
+}
+
+.rating-sub {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+/* 忘记 — 红色 */
+.rating-again {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+.rating-again:hover {
+    background-color: #ffcdd2;
+}
+.rating-again:active {
+    background-color: #ef9a9a;
+}
+
+/* 困难 — 橙色 */
+.rating-hard {
+    background-color: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+.rating-hard:hover {
+    background-color: #ffe0b2;
+}
+.rating-hard:active {
+    background-color: #ffcc80;
+}
+
+/* 正常 — 绿色 */
+.rating-good {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+.rating-good:hover {
+    background-color: #c8e6c9;
+}
+.rating-good:active {
+    background-color: #a5d6a7;
+}
+
 .vocabulary-article {
     padding: 0 20px 40px;
     max-width: 800px;
