@@ -1697,6 +1697,51 @@ input[type="text"]:focus, input[type="password"]:focus {
     background-color: #a5d6a7;
 }
 
+/* 复习页面 — 原句与翻译区域 */
+.review-sentence-section {
+    padding: 0 20px 20px;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.review-sentence-section.hidden {
+    display: none !important;
+}
+
+.review-sentence-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.review-sentence-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-primary, #333);
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border-left: 3px solid #e0e0e0;
+}
+
+.review-sentence-translation {
+    color: var(--text-secondary, #666);
+    border-left-color: #a5d6a7;
+}
+
+/* 句子中目标单词/释义的高亮 */
+.sentence-highlight {
+    font-weight: 700;
+    color: #e65100;
+    background: #fff3e0;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
 .vocabulary-article {
     padding: 0 20px 40px;
     max-width: 800px;

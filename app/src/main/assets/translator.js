@@ -152,30 +152,46 @@ class Translator {
         };
     }
 
-    // 批量翻译（一次API调用翻译所有单词）
-    async translateBatchWithDeepSeek(words) {
+    // 翻译单词并提取句子（一次API调用完成单词翻译+句子定位+句子翻译）
+    async translateWordsWithSentences(articleContent, words) {
         if (!this.apiKey) {
             throw new Error('DeepSeek API密钥未配置');
         }
 
-        const wordList = words.join('", "');
-        const systemPrompt = `你是一个专业的英汉词典。用户会提供一组英文单词，请为每个单词返回词性和中文释义。
+        const systemPrompt = `你是一个专业的英汉词典。用户会提供一篇文章和一组从文章中选出的英文单词。
+请为每个单词做三件事：
+1. 给出词性和中文释义
+2. 在文章中找到包含该单词的句子（选取用户最可能选中该单词的上下文句子）
+3. 将该句子翻译成中文
+
+重要标记规则：
+- 在原句(sentence)中，用 **单词** 标记目标单词（例如：**ubiquitous**）
+- 在翻译(sentenceTranslation)中，用 **对应中文释义** 标记目标单词的翻译部分（例如：**无处不在的**）
 
 请严格按照以下JSON数组格式返回，不要包含任何其他内容：
 [
-  {"word": "单词1", "pos": "词性", "meaning": "中文释义"},
-  {"word": "单词2", "pos": "词性", "meaning": "中文释义"}
+  {
+    "word": "单词",
+    "pos": "词性（如 n./v./adj./adv. 等）",
+    "meaning": "中文释义（简洁准确）",
+    "sentence": "原句，目标单词用**包裹",
+    "sentenceTranslation": "句子中文翻译，单词释义用**包裹"
+  }
 ]
 
-词性使用缩写：n./v./adj./adv./prep./conj./pron. 等，多个词性用 | 分隔。
-释义简洁准确，多个释义用分号分隔，每个释义前标注对应词性编号。
+示例文章：
+"The ubiquitous nature of smartphones has changed society profoundly."
 
-示例：
-输入: book, beautiful
-输出: [{"word": "book", "pos": "n. | v.", "meaning": "①书，书籍；本子，册子 ②预订，预约"}, {"word": "beautiful", "pos": "adj.", "meaning": "美丽的，漂亮的；出色的，完美的"}]`;
+示例输入单词：ubiquitous, profoundly
+
+示例输出：
+[
+  {"word": "ubiquitous", "pos": "adj.", "meaning": "无处不在的", "sentence": "The **ubiquitous** nature of smartphones has changed society profoundly.", "sentenceTranslation": "智能手机的**无处不在的**本质已经深刻地改变了社会。"},
+  {"word": "profoundly", "pos": "adv.", "meaning": "深刻地", "sentence": "The ubiquitous nature of smartphones has changed society **profoundly**.", "sentenceTranslation": "智能手机的无处不在的本质已经**深刻地**改变了社会。"}
+]`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
 
         try {
             const response = await fetch(this.apiUrl, {
@@ -188,10 +204,10 @@ class Translator {
                     model: 'deepseek-chat',
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        { role: 'user', content: `请翻译以下单词：${words.join(', ')}` }
+                        { role: 'user', content: `文章内容：\n${articleContent}\n\n请为以下单词查找句子并翻译：${words.join(', ')}` }
                     ],
                     temperature: 0.3,
-                    max_tokens: Math.max(500, words.length * 150)
+                    max_tokens: Math.max(1000, words.length * 300)
                 }),
                 signal: controller.signal
             });
@@ -200,7 +216,7 @@ class Translator {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error(`DeepSeek批量API错误: ${response.status} - ${errorText}`);
+                console.error(`DeepSeek API错误: ${response.status} - ${errorText}`);
                 if (response.status === 401) {
                     throw new Error('API密钥无效，请检查DeepSeek API密钥');
                 }
@@ -213,7 +229,7 @@ class Translator {
             const data = await response.json();
             if (data.choices && data.choices.length > 0) {
                 const content = data.choices[0].message.content.trim();
-                console.log('批量翻译返回:', content);
+                console.log('单词+句子翻译返回:', content);
 
                 // 提取JSON数组
                 let jsonStr = content;
@@ -221,14 +237,12 @@ class Translator {
                 if (jsonMatch) {
                     jsonStr = jsonMatch[1].trim();
                 }
-                // 提取 [...] 部分
                 const arrayMatch = jsonStr.match(/\[[\s\S]*\]/);
                 if (arrayMatch) {
                     jsonStr = arrayMatch[0];
                 }
 
                 const parsed = JSON.parse(jsonStr);
-                // 构建结果映射
                 const resultMap = {};
                 for (const item of parsed) {
                     const w = item.word.toLowerCase();
@@ -237,18 +251,26 @@ class Translator {
                         meaning = `${item.pos} ${item.meaning}`;
                     } else if (item.meaning) {
                         meaning = item.meaning;
-                    } else {
-                        meaning = item.pos || item.meaning || '';
                     }
-                    resultMap[w] = meaning;
+                    resultMap[w] = {
+                        word: item.word,
+                        meaning: meaning,
+                        sentence: item.sentence || '',
+                        sentenceTranslation: item.sentenceTranslation || ''
+                    };
                 }
 
                 // 按原始顺序返回结果
-                return words.map(word => ({
-                    word: word,
-                    meaning: resultMap[word.toLowerCase()] || '',
-                    source: 'deepseek'
-                }));
+                return words.map(word => {
+                    const result = resultMap[word.toLowerCase()];
+                    return {
+                        word: word,
+                        meaning: result ? result.meaning : '',
+                        sentence: result ? result.sentence : '',
+                        sentenceTranslation: result ? result.sentenceTranslation : '',
+                        source: 'deepseek'
+                    };
+                });
             }
 
             throw new Error('AI未返回有效结果');
@@ -262,28 +284,22 @@ class Translator {
         }
     }
 
-    // 批量翻译（优先批量API，失败时逐个回退）
+    // 批量翻译
     async translateBatch(words) {
-        if (words.length === 0) return [];
-
-        // 1. 尝试一次API调用批量翻译
-        try {
-            const batchResults = await this.translateBatchWithDeepSeek(words);
-            console.log(`批量翻译成功: ${words.length} 个单词`);
-            return batchResults;
-        } catch (error) {
-            console.warn('批量翻译失败，回退到逐个翻译:', error.message);
+        const results = [];
+        for (const word of words) {
+            try {
+                const result = await this.translate(word);
+                results.push(result);
+            } catch (error) {
+                results.push({
+                    word: word,
+                    meaning: '翻译失败',
+                    source: 'error'
+                });
+            }
         }
-
-        // 2. 批量失败时，并行逐个翻译（仍然比串行快很多）
-        const parallelTasks = words.map(word =>
-            this.translate(word).catch(err => ({
-                word: word,
-                meaning: '翻译失败',
-                source: 'error'
-            }))
-        );
-        return await Promise.all(parallelTasks);
+        return results;
     }
 }
 

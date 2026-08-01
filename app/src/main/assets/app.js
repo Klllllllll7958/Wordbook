@@ -78,6 +78,9 @@ class WordbookApp {
         this.reviewProgress = document.getElementById('review-progress');
         this.backFromReviewBtn = document.getElementById('back-from-review');
         this.reviewRatings = document.getElementById('review-ratings');
+        this.reviewSentenceSection = document.getElementById('review-sentence-section');
+        this.reviewSentenceOriginal = document.getElementById('review-sentence-original');
+        this.reviewSentenceTranslation = document.getElementById('review-sentence-translation');
         
         // API配置相关DOM元素
         this.apiKeyInput = document.getElementById('apikey-input');
@@ -502,12 +505,21 @@ class WordbookApp {
         this.saveArticleBtn.disabled = true;
 
         try {
-            // 批量翻译单词
-            const translations = await translator.translateBatch(wordsToAdd);
-            
+            // 尝试新方法：一次调用完成单词翻译+句子定位+句子翻译
+            let translations;
+            try {
+                translations = await translator.translateWordsWithSentences(
+                    this.articleInput.value, wordsToAdd
+                );
+            } catch (error) {
+                console.warn('句子提取翻译失败，回退到仅翻译单词:', error.message);
+                translations = await translator.translateBatch(wordsToAdd);
+                translations = translations.map(t => ({ ...t, sentence: '', sentenceTranslation: '' }));
+            }
+
             // 添加到单词本
-            translations.forEach(({ word, meaning }) => {
-                this.addWordToWordbook(word, meaning);
+            translations.forEach(({ word, meaning, sentence, sentenceTranslation }) => {
+                this.addWordToWordbook(word, meaning, sentence, sentenceTranslation);
             });
 
             // 保存文章
@@ -604,23 +616,36 @@ class WordbookApp {
     }
 
     // 添加单词到单词本
-    addWordToWordbook(word, meaning) {
+    addWordToWordbook(word, meaning, sentence, sentenceTranslation) {
         const lowerWord = word.toLowerCase();
-        
+
         // 检查是否已存在
         const existingIndex = this.wordbook.findIndex(item => item.word.toLowerCase() === lowerWord);
-        
+
         if (existingIndex !== -1) {
             // 更新现有单词
             this.wordbook[existingIndex].meaning = meaning;
+            if (sentence) {
+                this.wordbook[existingIndex].sentence = sentence;
+            }
+            if (sentenceTranslation) {
+                this.wordbook[existingIndex].sentenceTranslation = sentenceTranslation;
+            }
         } else {
             // 添加新单词
-            this.wordbook.push({
+            const entry = {
                 word: word,
                 meaning: meaning,
                 addedAt: new Date().toISOString(),
                 mastery: 0 // 掌握程度：0-100
-            });
+            };
+            if (sentence) {
+                entry.sentence = sentence;
+            }
+            if (sentenceTranslation) {
+                entry.sentenceTranslation = sentenceTranslation;
+            }
+            this.wordbook.push(entry);
         }
 
         this.saveWordbook();
@@ -1236,6 +1261,12 @@ class WordbookApp {
         return result;
     }
 
+    // 将 **text** 标记转换为高亮HTML标签（用于句子中的单词高亮）
+    renderHighlightedText(text) {
+        if (!text) return '';
+        return text.replace(/\*\*(.+?)\*\*/g, '<span class="sentence-highlight">$1</span>');
+    }
+
     // 渲染单词卡片
     renderWordCard() {
         if (!this.currentArticle || this.shuffledWords.length === 0) return;
@@ -1398,6 +1429,17 @@ class WordbookApp {
         this.reviewWord.textContent = currentItem.word;
         this.reviewMeaning.textContent = wordInfo ? wordInfo.meaning : '无释义';
 
+        // 设置句子内容（如果有的话），但保持隐藏，翻卡后才显示
+        if (wordInfo && wordInfo.sentence) {
+            this.reviewSentenceOriginal.innerHTML = this.renderHighlightedText(wordInfo.sentence);
+            this.reviewSentenceTranslation.innerHTML = this.renderHighlightedText(
+                wordInfo.sentenceTranslation || ''
+            );
+        } else {
+            this.reviewSentenceOriginal.innerHTML = '';
+            this.reviewSentenceTranslation.innerHTML = '';
+        }
+
         // 更新进度文字：已复习数 / 总数
         this.reviewProgress.textContent =
             `${this.reviewedCount + 1} / ${this.reviewWords.length + this.reviewedCount}`;
@@ -1405,15 +1447,20 @@ class WordbookApp {
         // 重置卡片为隐藏释义状态
         this.reviewFlashcard.classList.remove('show-meaning');
         this.reviewRatings.classList.add('hidden');
+        this.reviewSentenceSection.classList.add('hidden');
     }
 
-    // 翻转复习卡片（同时显示/隐藏评分按钮）
+    // 翻转复习卡片（同时显示/隐藏评分按钮和句子区域）
     toggleReviewFlashcard() {
         var isShowing = this.reviewFlashcard.classList.toggle('show-meaning');
         if (isShowing) {
             this.reviewRatings.classList.remove('hidden');
+            if (this.reviewSentenceOriginal.innerHTML.trim()) {
+                this.reviewSentenceSection.classList.remove('hidden');
+            }
         } else {
             this.reviewRatings.classList.add('hidden');
+            this.reviewSentenceSection.classList.add('hidden');
         }
     }
 
