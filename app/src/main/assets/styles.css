@@ -1522,6 +1522,53 @@ input[type="text"]:focus, input[type="password"]:focus {
     pointer-events: auto;
 }
 
+/* ========== 复习卡片滑动手势动画 (灵感来自 reactbits.dev CardSwap) ========== */
+
+/* 滑动时卡片跟随手指，取消过渡 */
+.vocabulary-card.swiping {
+    transition: none;
+}
+
+/* 滑出动画 — 向左滑（下一个） */
+.vocabulary-card.swipe-out-left {
+    animation: swipeOutLeft 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 滑出动画 — 向右滑（上一个） */
+.vocabulary-card.swipe-out-right {
+    animation: swipeOutRight 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 滑入动画 — 从右侧进入 */
+.vocabulary-card.swipe-in-from-right {
+    animation: swipeInFromRight 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 滑入动画 — 从左侧进入 */
+.vocabulary-card.swipe-in-from-left {
+    animation: swipeInFromLeft 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes swipeOutLeft {
+    0%   { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-130%); opacity: 0; }
+}
+
+@keyframes swipeOutRight {
+    0%   { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(130%); opacity: 0; }
+}
+
+@keyframes swipeInFromRight {
+    0%   { transform: translateX(130%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes swipeInFromLeft {
+    0%   { transform: translateX(-130%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
 .vocabulary-navigation {
     display: flex;
     justify-content: space-between;

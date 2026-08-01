@@ -13,6 +13,14 @@ class WordbookApp {
         this.reviewWords = [];
         this.currentReviewIndex = 0;
         this.reviewedCount = 0;
+
+        // 滑动手势状态（灵感来自 reactbits.dev CardSwap）
+        this.swipeStartX = 0;
+        this.swipeStartY = 0;
+        this.swipeCurrentX = 0;
+        this.swipeCurrentY = 0;
+        this.isSwiping = false;
+        this.swipeThreshold = 60; // 触发滑动的最小距离(px)
         
         // 新增：当前正在创建的文章
         this.currentCreatingArticle = null;
@@ -68,8 +76,6 @@ class WordbookApp {
         this.reviewWord = document.getElementById('review-word');
         this.reviewMeaning = document.getElementById('review-meaning');
         this.reviewProgress = document.getElementById('review-progress');
-        this.prevReviewBtn = document.getElementById('prev-review-btn');
-        this.nextReviewBtn = document.getElementById('next-review-btn');
         this.backFromReviewBtn = document.getElementById('back-from-review');
         this.reviewRatings = document.getElementById('review-ratings');
         
@@ -184,8 +190,9 @@ class WordbookApp {
         // 复习页面事件
         this.backFromReviewBtn.addEventListener('click', () => this.backFromReview());
         this.reviewFlashcard.addEventListener('click', () => this.toggleReviewFlashcard());
-        this.prevReviewBtn.addEventListener('click', () => this.prevReviewWord());
-        this.nextReviewBtn.addEventListener('click', () => this.nextReviewWord());
+
+        // 复习卡片滑动手势 — 向左滑=下一个，向右滑=上一个（灵感来自 reactbits.dev CardSwap）
+        this.setupReviewSwipe();
 
         // 评分按钮事件
         this.reviewRatings.querySelectorAll('.rating-btn').forEach(btn => {
@@ -1398,11 +1405,6 @@ class WordbookApp {
         // 重置卡片为隐藏释义状态
         this.reviewFlashcard.classList.remove('show-meaning');
         this.reviewRatings.classList.add('hidden');
-
-        // 恢复导航按钮状态（可能被 showReviewComplete 修改过）
-        this.prevReviewBtn.style.display = '';
-        this.nextReviewBtn.querySelector('span').textContent = '下一个';
-        this.nextReviewBtn.querySelector('svg').style.display = '';
     }
 
     // 翻转复习卡片（同时显示/隐藏评分按钮）
@@ -1463,47 +1465,165 @@ class WordbookApp {
             // 所有卡片都点了"忘记"
             this.reviewWord.textContent = '继续加油';
             this.reviewMeaning.textContent = '所有卡片都需要再复习，请稍后重试';
-            this.reviewProgress.textContent = '复习完成';
-
-            // 隐藏导航按钮
-            this.prevReviewBtn.style.display = 'none';
-            this.nextReviewBtn.style.display = 'none';
         } else {
             this.reviewWord.textContent = '复习完成！';
             this.reviewMeaning.textContent =
                 '本次成功复习 ' + this.reviewedCount + ' 个单词';
-            this.reviewProgress.textContent = '复习完成';
-
-            // 把导航按钮改成返回按钮
-            this.prevReviewBtn.style.display = 'none';
-            this.nextReviewBtn.querySelector('span').textContent = '返回';
-            this.nextReviewBtn.querySelector('svg').style.display = 'none';
         }
+        this.reviewProgress.textContent = '复习完成';
     }
 
-    // 上一个复习单词
-    prevReviewWord() {
-        if (this.reviewWords.length === 0) return;
+    // ========== 复习卡片滑动手势（灵感来自 reactbits.dev CardSwap） ==========
 
-        this.currentReviewIndex = (this.currentReviewIndex - 1 + this.reviewWords.length) % this.reviewWords.length;
-        this.renderReviewCard();
+    setupReviewSwipe() {
+        var self = this;
+        var card = this.reviewFlashcard;
+
+        // 触摸事件（移动端）
+        card.addEventListener('touchstart', function(e) { self._handleSwipeStart(e, e.touches[0]); }, { passive: false });
+        card.addEventListener('touchmove', function(e) { self._handleSwipeMove(e, e.touches[0]); }, { passive: false });
+        card.addEventListener('touchend', function(e) { self._handleSwipeEnd(e); });
+
+        // 鼠标事件（桌面端）
+        card.addEventListener('mousedown', function(e) { self._handleSwipeStart(e, e); });
+        card.addEventListener('mousemove', function(e) { self._handleSwipeMove(e, e); });
+        card.addEventListener('mouseup', function(e) { self._handleSwipeEnd(e); });
+        card.addEventListener('mouseleave', function(e) { self._handleSwipeEnd(e); });
     }
 
-    // 下一个复习单词
-    nextReviewWord() {
-        if (this.reviewWords.length === 0) return;
+    _handleSwipeStart(e, point) {
+        // 评分按钮区域不触发滑动
+        if (e.target.closest('.rating-btn')) return;
 
-        // 如果是"复习完成"状态，nextReviewBtn 变成了返回按钮
-        if (this.reviewProgress.textContent === '复习完成') {
-            this.prevReviewBtn.style.display = '';
-            this.nextReviewBtn.querySelector('span').textContent = '下一个';
-            this.nextReviewBtn.querySelector('svg').style.display = '';
-            this.backFromReview();
+        // 只有在复习页面显示时才处理
+        if (this.reviewSection.classList.contains('hidden')) return;
+
+        // 复习完成状态不处理滑动
+        if (this.reviewProgress.textContent === '复习完成') return;
+
+        this.swipeStartX = point.clientX;
+        this.swipeStartY = point.clientY;
+        this.swipeCurrentX = point.clientX;
+        this.swipeCurrentY = point.clientY;
+        this.isSwiping = true;
+
+        // 让卡片跟随手指（取消过渡动画）
+        this.reviewFlashcard.classList.add('swiping');
+    }
+
+    _handleSwipeMove(e, point) {
+        if (!this.isSwiping) return;
+
+        this.swipeCurrentX = point.clientX;
+        this.swipeCurrentY = point.clientY;
+
+        var deltaX = this.swipeCurrentX - this.swipeStartX;
+        var deltaY = this.swipeCurrentY - this.swipeStartY;
+
+        // 如果垂直移动更大，取消滑动（让页面滚动）
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+            this._resetSwipe();
             return;
         }
 
-        this.currentReviewIndex = (this.currentReviewIndex + 1) % this.reviewWords.length;
-        this.renderReviewCard();
+        // 阻止默认行为防止页面滚动
+        if (Math.abs(deltaX) > 10) {
+            e.preventDefault();
+        }
+
+        // 卡片跟随手指移动（带阻尼）
+        var dampedX = deltaX * 0.6;
+        this.reviewFlashcard.style.transform = 'translateX(' + dampedX + 'px)';
+        this.reviewFlashcard.style.opacity = Math.max(0.4, 1 - Math.abs(deltaX) / 400);
+    }
+
+    _handleSwipeEnd(e) {
+        if (!this.isSwiping) return;
+
+        var deltaX = this.swipeCurrentX - this.swipeStartX;
+        this.isSwiping = false;
+
+        // 重置样式
+        this.reviewFlashcard.classList.remove('swiping');
+        this.reviewFlashcard.style.transform = '';
+        this.reviewFlashcard.style.opacity = '';
+
+        // 判断是否为有效滑动
+        if (Math.abs(deltaX) >= this.swipeThreshold) {
+            if (deltaX < 0) {
+                // 向左滑 = 下一个单词
+                this._animateSwipeToNext();
+            } else {
+                // 向右滑 = 上一个单词
+                this._animateSwipeToPrev();
+            }
+        }
+    }
+
+    _resetSwipe() {
+        this.isSwiping = false;
+        this.reviewFlashcard.classList.remove('swiping');
+        this.reviewFlashcard.style.transform = '';
+        this.reviewFlashcard.style.opacity = '';
+    }
+
+    _animateSwipeToNext() {
+        if (this.reviewWords.length === 0) return;
+
+        var self = this;
+        var card = this.reviewFlashcard;
+
+        // 1. 卡片向左滑出
+        card.classList.add('swipe-out-left');
+
+        // 2. 动画结束后更新内容并从右侧滑入
+        card.addEventListener('animationend', function handler() {
+            card.removeEventListener('animationend', handler);
+            card.classList.remove('swipe-out-left');
+
+            // 更新索引和内容
+            if (self.reviewProgress.textContent === '复习完成') {
+                self.backFromReview();
+                return;
+            }
+
+            self.currentReviewIndex = (self.currentReviewIndex + 1) % self.reviewWords.length;
+            self.renderReviewCard();
+
+            // 3. 卡片从右侧滑入
+            card.classList.add('swipe-in-from-right');
+            card.addEventListener('animationend', function handler2() {
+                card.removeEventListener('animationend', handler2);
+                card.classList.remove('swipe-in-from-right');
+            });
+        });
+    }
+
+    _animateSwipeToPrev() {
+        if (this.reviewWords.length === 0) return;
+
+        var self = this;
+        var card = this.reviewFlashcard;
+
+        // 1. 卡片向右滑出
+        card.classList.add('swipe-out-right');
+
+        // 2. 动画结束后更新内容并从左侧滑入
+        card.addEventListener('animationend', function handler() {
+            card.removeEventListener('animationend', handler);
+            card.classList.remove('swipe-out-right');
+
+            // 更新索引和内容
+            self.currentReviewIndex = (self.currentReviewIndex - 1 + self.reviewWords.length) % self.reviewWords.length;
+            self.renderReviewCard();
+
+            // 3. 卡片从左侧滑入
+            card.classList.add('swipe-in-from-left');
+            card.addEventListener('animationend', function handler2() {
+                card.removeEventListener('animationend', handler2);
+                card.classList.remove('swipe-in-from-left');
+            });
+        });
     }
 }
 
