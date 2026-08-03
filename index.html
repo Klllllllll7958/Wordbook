@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>单词本</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -99,6 +99,25 @@
             </div>
         </section>
 
+        <!-- 长句本页面 -->
+        <section class="section hidden" id="sentence-section">
+            <div class="section-header">
+                <div class="section-header-content">
+                    <h2>我的长句</h2>
+                    <p id="sentence-count" class="wordbook-count">共有0条长句</p>
+                </div>
+                <button id="sentence-review-btn" class="btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 3v18l15-9L5 3z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="white"/>
+                    </svg>
+                    开始复习
+                </button>
+            </div>
+            <div id="sentence-list" class="wordbook-list">
+                <!-- 长句列表将显示在这里 -->
+            </div>
+        </section>
+
         <!-- 文章输入页面 -->
         <section class="section hidden" id="article-input-section">
             <div class="section-header">
@@ -131,14 +150,14 @@
             </div>
 
             <div class="section-body word-selection-body">
-                <p class="hint">💡 点击单词进行选择，选中的单词会变色</p>
+                <p class="hint">💡 点按选中单词 ｜ 长按单词并拖动选择长句</p>
                 <p class="count">已选中 <span id="selected-count">0</span> 个单词</p>
 
                 <div id="word-display" class="word-display">
                     <!-- 分割后的单词将显示在这里 -->
                 </div>
 
-                <button id="save-article-btn" class="btn-primary">保存文章和单词</button>
+                <button id="save-article-btn" class="btn-primary">保存</button>
             </div>
         </section>
 
@@ -211,6 +230,55 @@
 
         </section>
 
+        <!-- 长句复习页面 -->
+        <section class="section hidden" id="sentence-review-section">
+            <div class="section-header">
+                <button id="back-from-sentence-review" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2>复习长句</h2>
+                <span id="sentence-review-progress" class="review-progress-text"></span>
+            </div>
+
+            <div class="vocabulary-card-container">
+                <div class="vocabulary-card" id="sentence-review-flashcard">
+                    <div class="vocabulary-card-content">
+                        <div class="vocabulary-card-word" id="sentence-review-text"></div>
+                        <div class="vocabulary-card-meaning" id="sentence-review-translation"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 评分按钮（翻转卡片后显示） -->
+            <div class="review-ratings hidden" id="sentence-review-ratings">
+                <button class="rating-btn rating-again" data-rating="1">
+                    <span class="rating-label">忘记</span>
+                    <span class="rating-sub">Again</span>
+                </button>
+                <button class="rating-btn rating-hard" data-rating="2">
+                    <span class="rating-label">困难</span>
+                    <span class="rating-sub">Hard</span>
+                </button>
+                <button class="rating-btn rating-good" data-rating="3">
+                    <span class="rating-label">正常</span>
+                    <span class="rating-sub">Good</span>
+                </button>
+            </div>
+
+            <!-- 句子结构分析（翻转卡片后显示） -->
+            <div class="review-sentence-section hidden" id="sentence-review-analysis">
+                <div class="review-sentence-label">📐 句子结构解析</div>
+                <div class="review-sentence-text" id="sentence-review-colored"></div>
+                <div class="review-sentence-label">📋 逐层拆解</div>
+                <div class="review-sentence-text" id="sentence-review-breakdown"></div>
+                <div class="review-sentence-label">🌳 结构树状图</div>
+                <div class="review-sentence-text review-sentence-translation" id="sentence-review-tree"></div>
+            </div>
+
+        </section>
+
         <!-- 文章标题输入页面 -->
         <section class="section hidden" id="article-title-section">
             <div class="section-header">
@@ -275,6 +343,31 @@
                 </div>
             </div>
         </section>
+
+        <!-- 长句详情页面 -->
+        <section class="section hidden" id="sentence-detail-section">
+            <div class="section-header">
+                <button id="back-from-sentence-detail" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h2>长句详情</h2>
+                <div class="empty"></div>
+            </div>
+
+            <div class="section-body sentence-detail-body">
+                <div class="sentence-detail-original" id="sentence-detail-original"></div>
+                <div class="sentence-detail-label">📐 句子结构解析</div>
+                <div class="review-sentence-text" id="sentence-detail-colored"></div>
+                <div class="sentence-detail-label">📋 逐层拆解</div>
+                <div class="review-sentence-text" id="sentence-detail-breakdown"></div>
+                <div class="sentence-detail-label">🌳 结构树状图</div>
+                <div class="review-sentence-text review-sentence-translation" id="sentence-detail-tree"></div>
+                <div class="sentence-detail-label">📝 中文翻译</div>
+                <div class="review-sentence-text" id="sentence-detail-translation"></div>
+            </div>
+        </section>
     </main>
 
     <!-- 底部导航 -->
@@ -297,6 +390,12 @@
                     <polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 <span>单词</span>
+            </button>
+            <button class="nav-item" data-page="sentences">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6h16M4 12h16M4 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>长句</span>
             </button>
             <button class="nav-item" data-page="settings">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

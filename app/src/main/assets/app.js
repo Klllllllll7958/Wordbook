@@ -3,7 +3,13 @@ class WordbookApp {
     constructor() {
         // 状态管理
         this.selectedWords = new Set();
+        this.selectedSentences = []; // {startId, endId, colorIndex}
+        this.sentenceColorIndex = 0;
+        this.isDrawingSentence = false;
+        this.sentenceDrawStartId = -1;
+        this.sentenceDrawEndId = -1;
         this.wordbook = this.loadWordbook();
+        this.sentencebook = this.loadSentences();
         this.articles = this.loadArticles();
         this.currentMemoryIndex = -1;
         this.isShowingMeaning = false;
@@ -13,6 +19,11 @@ class WordbookApp {
         this.reviewWords = [];
         this.currentReviewIndex = 0;
         this.reviewedCount = 0;
+
+        // 长句复习页面状态
+        this.sentenceReviewWords = [];
+        this.sentenceReviewIndex = 0;
+        this.sentenceReviewedCount = 0;
 
         // 滑动手势状态（灵感来自 reactbits.dev CardSwap）
         this.swipeStartX = 0;
@@ -81,6 +92,30 @@ class WordbookApp {
         this.reviewSentenceSection = document.getElementById('review-sentence-section');
         this.reviewSentenceOriginal = document.getElementById('review-sentence-original');
         this.reviewSentenceTranslation = document.getElementById('review-sentence-translation');
+
+        // 长句相关元素
+        this.sentenceSection = document.getElementById('sentence-section');
+        this.sentenceList = document.getElementById('sentence-list');
+        this.sentenceCount = document.getElementById('sentence-count');
+        this.sentenceReviewBtn = document.getElementById('sentence-review-btn');
+        this.sentenceDetailSection = document.getElementById('sentence-detail-section');
+        this.sentenceDetailOriginal = document.getElementById('sentence-detail-original');
+        this.sentenceDetailColored = document.getElementById('sentence-detail-colored');
+        this.sentenceDetailBreakdown = document.getElementById('sentence-detail-breakdown');
+        this.sentenceDetailTree = document.getElementById('sentence-detail-tree');
+        this.sentenceDetailTranslation = document.getElementById('sentence-detail-translation');
+        this.backFromSentenceDetailBtn = document.getElementById('back-from-sentence-detail');
+        this.sentenceReviewSection = document.getElementById('sentence-review-section');
+        this.sentenceReviewFlashcard = document.getElementById('sentence-review-flashcard');
+        this.sentenceReviewText = document.getElementById('sentence-review-text');
+        this.sentenceReviewTranslation = document.getElementById('sentence-review-translation');
+        this.sentenceReviewProgress = document.getElementById('sentence-review-progress');
+        this.backFromSentenceReviewBtn = document.getElementById('back-from-sentence-review');
+        this.sentenceReviewRatings = document.getElementById('sentence-review-ratings');
+        this.sentenceReviewAnalysis = document.getElementById('sentence-review-analysis');
+        this.sentenceReviewColored = document.getElementById('sentence-review-colored');
+        this.sentenceReviewBreakdown = document.getElementById('sentence-review-breakdown');
+        this.sentenceReviewTree = document.getElementById('sentence-review-tree');
         
         // API配置相关DOM元素
         this.apiKeyInput = document.getElementById('apikey-input');
@@ -101,6 +136,7 @@ class WordbookApp {
         this.bindEvents();
         this.renderArticles();
         this.renderWordbook();
+        this.renderSentences();
         this.updateSelectedCount();
         this.setupNavigation();
         this.setupPopStateListener();
@@ -205,6 +241,23 @@ class WordbookApp {
                 this.rateCard(rating);
             });
         });
+
+        // 长句相关事件
+        this.sentenceReviewBtn.addEventListener('click', () => this.startSentenceReview());
+        this.backFromSentenceDetailBtn.addEventListener('click', () => this.closeSentenceDetail());
+        this.backFromSentenceReviewBtn.addEventListener('click', () => this.backFromSentenceReview());
+        this.sentenceReviewFlashcard.addEventListener('click', () => this.toggleSentenceReviewFlashcard());
+        this.sentenceReviewRatings.querySelectorAll('.rating-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const rating = parseInt(btn.dataset.rating);
+                this.rateSentenceCard(rating);
+            });
+        });
+
+        // 长句复习滑动手势
+        this.setupSentenceReviewSwipe();
+
     }
 
     // 设置底部导航
@@ -226,6 +279,7 @@ class WordbookApp {
             'home': ['articles-section'],
             'articles': ['articles-section'],
             'words': ['wordbook-section'],
+            'sentences': ['sentence-section'],
             'settings': ['settings-section']
         };
 
@@ -404,8 +458,10 @@ class WordbookApp {
         // 渲染单词
         this.renderWords();
 
-        // 清空已选单词
+        // 清空已选单词和长句
         this.selectedWords.clear();
+        this.selectedSentences = [];
+        this.sentenceColorIndex = 0;
         this.updateSelectedCount();
 
         // 跳转到单词选择页面
@@ -433,29 +489,89 @@ class WordbookApp {
         }));
     }
 
-    // 渲染单词
+    // 渲染单词（支持点按选单词 + 长按拖选句子）
     renderWords() {
+        var self = this;
         this.wordDisplay.innerHTML = '';
-        
+
         this.processedWords.forEach(item => {
+            const span = document.createElement('span');
+            span.textContent = item.text;
+            span.dataset.id = item.id;
             if (item.isWord) {
-                const wordSpan = document.createElement('span');
-                wordSpan.className = 'word';
-                wordSpan.textContent = item.text;
-                wordSpan.dataset.word = item.text.toLowerCase();
-                wordSpan.dataset.id = item.id;
-                
-                wordSpan.addEventListener('click', () => this.toggleWordSelection(wordSpan, item.text));
-                
-                this.wordDisplay.appendChild(wordSpan);
-            } else if (/^\s+$/.test(item.text)) {
-                // 空白字符
-                this.wordDisplay.appendChild(document.createTextNode(item.text));
+                span.className = 'word';
+                span.dataset.word = item.text.toLowerCase();
+                if (this.selectedWords.has(item.text.toLowerCase())) {
+                    span.classList.add('selected');
+                }
             } else {
-                // 标点符号
-                this.wordDisplay.appendChild(document.createTextNode(item.text));
+                span.className = 'token';
             }
+
+            // 短按（<500ms）选单词
+            var pressTimer;
+            var pressStartTime;
+            span.addEventListener('mousedown', function(e) {
+                pressStartTime = Date.now();
+                pressTimer = setTimeout(function() {
+                    // 长按触发 → 开始划线
+                    self.startSentenceDraw(parseInt(span.dataset.id));
+                }, 500);
+            });
+
+            span.addEventListener('mouseup', function(e) {
+                clearTimeout(pressTimer);
+                if (self.isDrawingSentence) {
+                    self.endSentenceDraw();
+                } else if (Date.now() - pressStartTime < 500) {
+                    // 短按 → 选单词
+                    self.toggleWordSelection(span, item.text);
+                }
+            });
+
+            span.addEventListener('mouseleave', function() {
+                clearTimeout(pressTimer);
+            });
+
+            // 触摸事件
+            span.addEventListener('touchstart', function(e) {
+                pressStartTime = Date.now();
+                pressTimer = setTimeout(function() {
+                    self.startSentenceDraw(parseInt(span.dataset.id));
+                }, 500);
+            }, { passive: true });
+
+            span.addEventListener('touchend', function(e) {
+                clearTimeout(pressTimer);
+                if (self.isDrawingSentence) {
+                    self.endSentenceDraw();
+                } else if (Date.now() - pressStartTime < 500) {
+                    self.toggleWordSelection(span, item.text);
+                }
+            });
+
+            span.addEventListener('touchcancel', function() {
+                clearTimeout(pressTimer);
+            });
+
+            this.wordDisplay.appendChild(span);
         });
+
+        // 全局移动事件 — 划线时跟踪手指/鼠标
+        this.wordDisplay.onmousemove = function(e) {
+            if (self.isDrawingSentence) {
+                self.updateSentenceDraw(e);
+            }
+        };
+        this.wordDisplay.ontouchmove = function(e) {
+            if (self.isDrawingSentence) {
+                self.updateSentenceDraw(e.touches[0]);
+                e.preventDefault();
+            }
+        };
+
+        // 恢复已保存的长句颜色
+        this.renderSentenceUnderlines();
     }
 
     // 切换单词选中状态
@@ -522,6 +638,38 @@ class WordbookApp {
                 this.addWordToWordbook(word, meaning, sentence, sentenceTranslation);
             });
 
+            // 处理选中的长句
+            let sentenceCount = 0;
+            if (this.selectedSentences.length > 0) {
+                for (const sent of this.selectedSentences) {
+                    try {
+                        const sentenceText = this.processedWords
+                            .slice(sent.startId, sent.endId + 1)
+                            .map(t => t.text)
+                            .join('');
+                        const analysis = await translator.analyzeSentence(sentenceText);
+                        const entry = {
+                            id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5),
+                            sentence: sentenceText,
+                            translation: analysis.translation,
+                            segments: analysis.segments,
+                            breakdown: analysis.breakdown,
+                            source: title,
+                            addedAt: new Date().toISOString()
+                        };
+                        FSRS.initCard(entry);
+                        this.sentencebook.push(entry);
+                        sentenceCount++;
+                    } catch (err) {
+                        console.warn('句子分析失败:', sentenceText.substring(0, 50), err.message);
+                    }
+                }
+                if (sentenceCount > 0) {
+                    this.saveSentences();
+                    this.renderSentences();
+                }
+            }
+
             // 保存文章
             const article = {
                 id: Date.now().toString(),
@@ -529,9 +677,9 @@ class WordbookApp {
                 content: content,
                 words: wordsToAdd,
                 addedAt: new Date().toISOString(),
-                type: 'article' // 标记为文章添加的文章
+                type: 'article'
             };
-            
+
             this.articles.push(article);
             this.saveArticles();
 
@@ -540,17 +688,20 @@ class WordbookApp {
             this.articleInputSection.classList.add('hidden');
             document.querySelector('.footer').classList.remove('hidden');
             this.switchPage('articles');
-            
-            // 重新渲染
+
             this.renderArticles();
             this.renderWordbook();
-            
-            alert(`成功保存文章和 ${translations.length} 个单词！`);
+
+            var msg = `成功保存文章和 ${translations.length} 个单词`;
+            if (sentenceCount > 0) {
+                msg += `，${sentenceCount} 条长句`;
+            }
+            alert(msg + '！');
         } catch (error) {
             console.error('保存失败:', error);
             alert('保存失败，请重试');
         } finally {
-            this.saveArticleBtn.textContent = '保存文章和单词';
+            this.saveArticleBtn.textContent = '保存';
             this.saveArticleBtn.disabled = false;
         }
     }
@@ -961,6 +1112,28 @@ class WordbookApp {
         }
     }
 
+    // 加载长句本
+    loadSentences() {
+        try {
+            const saved = localStorage.getItem('sentencebook');
+            const sentencebook = saved ? JSON.parse(saved) : [];
+            sentencebook.forEach(item => FSRS.initCard(item));
+            return sentencebook;
+        } catch (error) {
+            console.error('加载长句本失败:', error);
+            return [];
+        }
+    }
+
+    // 保存长句本
+    saveSentences() {
+        try {
+            localStorage.setItem('sentencebook', JSON.stringify(this.sentencebook));
+        } catch (error) {
+            console.error('保存长句本失败:', error);
+        }
+    }
+
     // 加载API配置
     loadApiConfig() {
         const apiKey = localStorage.getItem('deepseekApiKey') || '';
@@ -1150,6 +1323,7 @@ class WordbookApp {
             'home': ['articles-section'],
             'articles': ['articles-section'],
             'words': ['wordbook-section'],
+            'sentences': ['sentence-section'],
             'settings': ['settings-section']
         };
 
@@ -1178,7 +1352,7 @@ class WordbookApp {
         }
         
         // 添加历史记录，以便返回键能正确工作
-        if (page === 'articles' || page === 'words' || page === 'settings') {
+        if (page === 'articles' || page === 'words' || page === 'sentences' || page === 'settings') {
             history.pushState({ page: page }, '', '');
         }
     }
@@ -1264,7 +1438,9 @@ class WordbookApp {
     // 将 **text** 标记转换为高亮HTML标签（用于句子中的单词高亮）
     renderHighlightedText(text) {
         if (!text) return '';
-        return text.replace(/\*\*(.+?)\*\*/g, '<span class="sentence-highlight">$1</span>');
+        // 先转义整个文本，再将 **...** 转换为高亮标签
+        const escaped = this.escapeHtml(text);
+        return escaped.replace(/\*\*(.+?)\*\*/g, '<span class="sentence-highlight">$1</span>');
     }
 
     // 渲染单词卡片
@@ -1671,6 +1847,445 @@ class WordbookApp {
                 card.classList.remove('swipe-in-from-left');
             });
         });
+    }
+
+    // ========== 长句复习滑动手势 ==========
+
+    setupSentenceReviewSwipe() {
+        var self = this;
+        var card = this.sentenceReviewFlashcard;
+
+        card.addEventListener('touchstart', function(e) { self._handleSentenceSwipeStart(e, e.touches[0]); }, { passive: false });
+        card.addEventListener('touchmove', function(e) { self._handleSentenceSwipeMove(e, e.touches[0]); }, { passive: false });
+        card.addEventListener('touchend', function(e) { self._handleSentenceSwipeEnd(e); });
+
+        card.addEventListener('mousedown', function(e) { self._handleSentenceSwipeStart(e, e); });
+        card.addEventListener('mousemove', function(e) { self._handleSentenceSwipeMove(e, e); });
+        card.addEventListener('mouseup', function(e) { self._handleSentenceSwipeEnd(e); });
+        card.addEventListener('mouseleave', function(e) { self._handleSentenceSwipeEnd(e); });
+    }
+
+    _handleSentenceSwipeStart(e, point) {
+        if (e.target.closest('.rating-btn')) return;
+        if (this.sentenceReviewSection.classList.contains('hidden')) return;
+        if (this.sentenceReviewProgress.textContent === '复习完成') return;
+
+        this.swipeStartX = point.clientX;
+        this.swipeStartY = point.clientY;
+        this.swipeCurrentX = point.clientX;
+        this.swipeCurrentY = point.clientY;
+        this.isSwiping = true;
+        this.sentenceReviewFlashcard.classList.add('swiping');
+    }
+
+    _handleSentenceSwipeMove(e, point) {
+        if (!this.isSwiping) return;
+        this.swipeCurrentX = point.clientX;
+        this.swipeCurrentY = point.clientY;
+        var deltaX = this.swipeCurrentX - this.swipeStartX;
+        var deltaY = this.swipeCurrentY - this.swipeStartY;
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) { this._resetSentenceSwipe(); return; }
+        if (Math.abs(deltaX) > 10) { e.preventDefault(); }
+        var dampedX = deltaX * 0.6;
+        this.sentenceReviewFlashcard.style.transform = 'translateX(' + dampedX + 'px)';
+        this.sentenceReviewFlashcard.style.opacity = Math.max(0.4, 1 - Math.abs(deltaX) / 400);
+    }
+
+    _handleSentenceSwipeEnd(e) {
+        if (!this.isSwiping) return;
+        var deltaX = this.swipeCurrentX - this.swipeStartX;
+        this.isSwiping = false;
+        this.sentenceReviewFlashcard.classList.remove('swiping');
+        this.sentenceReviewFlashcard.style.transform = '';
+        this.sentenceReviewFlashcard.style.opacity = '';
+        if (Math.abs(deltaX) >= this.swipeThreshold) {
+            if (deltaX < 0) { this._animateSentenceSwipeToNext(); }
+            else { this._animateSentenceSwipeToPrev(); }
+        }
+    }
+
+    _resetSentenceSwipe() {
+        this.isSwiping = false;
+        this.sentenceReviewFlashcard.classList.remove('swiping');
+        this.sentenceReviewFlashcard.style.transform = '';
+        this.sentenceReviewFlashcard.style.opacity = '';
+    }
+
+    _animateSentenceSwipeToNext() {
+        if (this.sentenceReviewWords.length === 0) return;
+        var self = this;
+        var card = this.sentenceReviewFlashcard;
+        card.classList.add('swipe-out-left');
+        card.addEventListener('animationend', function handler() {
+            card.removeEventListener('animationend', handler);
+            card.classList.remove('swipe-out-left');
+            if (self.sentenceReviewProgress.textContent === '复习完成') { self.backFromSentenceReview(); return; }
+            self.sentenceReviewIndex = (self.sentenceReviewIndex + 1) % self.sentenceReviewWords.length;
+            self.renderSentenceReviewCard();
+            card.classList.add('swipe-in-from-right');
+            card.addEventListener('animationend', function handler2() { card.removeEventListener('animationend', handler2); card.classList.remove('swipe-in-from-right'); });
+        });
+    }
+
+    _animateSentenceSwipeToPrev() {
+        if (this.sentenceReviewWords.length === 0) return;
+        var self = this;
+        var card = this.sentenceReviewFlashcard;
+        card.classList.add('swipe-out-right');
+        card.addEventListener('animationend', function handler() {
+            card.removeEventListener('animationend', handler);
+            card.classList.remove('swipe-out-right');
+            self.sentenceReviewIndex = (self.sentenceReviewIndex - 1 + self.sentenceReviewWords.length) % self.sentenceReviewWords.length;
+            self.renderSentenceReviewCard();
+            card.classList.add('swipe-in-from-left');
+            card.addEventListener('animationend', function handler2() { card.removeEventListener('animationend', handler2); card.classList.remove('swipe-in-from-left'); });
+        });
+    }
+
+    // ========== 长句本功能 ==========
+
+    // 渲染长句列表
+    renderSentences() {
+        this.sentenceCount.textContent = `共有${this.sentencebook.length}条长句`;
+
+        if (this.sentencebook.length === 0) {
+            this.sentenceList.innerHTML = '<div class="empty-state">📐<br>暂无长句<br><span style="font-size:14px;">在添加文章时长按拖选句子来收藏</span></div>';
+            return;
+        }
+
+        const sorted = [...this.sentencebook].sort((a, b) =>
+            new Date(b.addedAt) - new Date(a.addedAt)
+        );
+
+        this.sentenceList.innerHTML = '';
+        sorted.forEach(item => {
+            const listItem = document.createElement('div');
+            listItem.className = 'sentence-list-item';
+            listItem.innerHTML = `
+                <div class="sentence-text">${this.escapeHtml(item.sentence)}</div>
+                <div class="sentence-source">${this.escapeHtml(item.source || '')}</div>
+            `;
+
+            listItem.addEventListener('click', () => this.openSentenceDetail(item));
+
+            let longPressTimer;
+            listItem.addEventListener('mousedown', () => {
+                listItem.classList.add('long-press');
+                longPressTimer = setTimeout(() => this.deleteSentence(item.id), 500);
+            });
+            listItem.addEventListener('mouseup', () => { clearTimeout(longPressTimer); setTimeout(() => listItem.classList.remove('long-press'), 100); });
+            listItem.addEventListener('mouseleave', () => { clearTimeout(longPressTimer); setTimeout(() => listItem.classList.remove('long-press'), 100); });
+            listItem.addEventListener('touchstart', () => {
+                listItem.classList.add('long-press');
+                longPressTimer = setTimeout(() => this.deleteSentence(item.id), 500);
+            });
+            listItem.addEventListener('touchend', () => { clearTimeout(longPressTimer); setTimeout(() => listItem.classList.remove('long-press'), 100); });
+            listItem.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); setTimeout(() => listItem.classList.remove('long-press'), 100); });
+
+            this.sentenceList.appendChild(listItem);
+        });
+    }
+
+    // 删除长句
+    deleteSentence(id) {
+        this.showCustomConfirm('删除长句', '确定要删除这条长句吗？此操作无法撤销。', () => {
+            this.sentencebook = this.sentencebook.filter(item => item.id !== id);
+            this.saveSentences();
+            this.renderSentences();
+        });
+    }
+
+    // 打开长句详情
+    openSentenceDetail(item) {
+        this.sentenceDetailOriginal.textContent = item.sentence;
+        this.sentenceDetailColored.innerHTML = item.segments && item.segments.length > 0
+            ? this.renderSegmentsToHtml(item.segments)
+            : '<p style="color:#999;">暂无结构分析</p>';
+        this.sentenceDetailBreakdown.innerHTML = this.renderBreakdownToHtml(item.breakdown || '暂无拆解');
+        this.sentenceDetailTree.innerHTML = this.renderTreeFromBreakdown(item.breakdown || '');
+        this.sentenceDetailTranslation.textContent = item.translation || '暂无翻译';
+
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelector('.footer').classList.add('hidden');
+        this.sentenceDetailSection.classList.remove('hidden');
+        history.pushState({ page: 'sentence-detail' }, '', '');
+    }
+
+    // 关闭长句详情
+    closeSentenceDetail() {
+        this.sentenceDetailSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        this.switchPage('sentences');
+    }
+
+    // 将 segments 数组渲染为彩色标注 HTML
+    renderSegmentsToHtml(segments) {
+        if (!segments || segments.length === 0) return '';
+        return '<div style="overflow-x:hidden;word-wrap:break-word;white-space:normal;">' +
+            segments.map(seg => {
+                const typeClass = seg.type ? `type-${seg.type}` : '';
+                const title = this.escapeHtml(seg.role ? `${seg.type} — ${seg.role}` : (seg.type || ''));
+                return `<span class="sentence-segment ${typeClass}" title="${title}">${this.escapeHtml(seg.text)}</span>`;
+            }).join('') +
+            '</div>';
+    }
+
+    // 将 breakdown 文本渲染为 HTML（保留换行和 emoji，去掉树状图部分）
+    renderBreakdownToHtml(breakdown) {
+        if (!breakdown) return '<p style="color:#999;">暂无拆解</p>';
+        // 截断树状图部分（从 🌳 开始），避免重复
+        var treeIdx = breakdown.indexOf('🌳');
+        var text = treeIdx !== -1 ? breakdown.substring(0, treeIdx).trim() : breakdown;
+        if (!text) return '<p style="color:#999;">暂无拆解</p>';
+        const escaped = this.escapeHtml(text);
+        const withBreaks = escaped.replace(/\n/g, '<br>');
+        return `<div style="white-space:pre-wrap;line-height:1.8;overflow-x:hidden;word-wrap:break-word;">${withBreaks}</div>`;
+    }
+
+    // 从 breakdown 中提取树状图部分
+    renderTreeFromBreakdown(breakdown) {
+        if (!breakdown) return '<p style="color:#999;">暂无树状图</p>';
+        const treeIdx = breakdown.indexOf('🌳');
+        if (treeIdx === -1) return '<p style="color:#999;">暂无树状图</p>';
+        const treeText = breakdown.substring(treeIdx);
+        const escaped = this.escapeHtml(treeText);
+        return `<div style="font-family:'Courier New',monospace;font-size:13px;white-space:pre;line-height:1.6;overflow-x:hidden;word-wrap:break-word;">${escaped.replace(/\n/g, '<br>')}</div>`;
+    }
+
+    // ========== 长句划线选择 ==========
+
+    // 开始划线（长按单词触发）
+    startSentenceDraw(tokenId) {
+        // 检查该 token 是否已在某个划线句子中 → 取消该句
+        var existingIndex = this.selectedSentences.findIndex(function(s) {
+            return tokenId >= s.startId && tokenId <= s.endId;
+        });
+        if (existingIndex !== -1) {
+            this.selectedSentences.splice(existingIndex, 1);
+            this.isDrawingSentence = false;
+            this.sentenceDrawStartId = -1;
+            this.renderAllTokenStyles();
+            return;
+        }
+
+        this.isDrawingSentence = true;
+        this.sentenceDrawStartId = tokenId;
+        this.sentenceDrawEndId = tokenId;
+        this.renderAllTokenStyles();
+    }
+
+    // 划线中移动
+    updateSentenceDraw(point) {
+        if (!this.isDrawingSentence) return;
+        var el = document.elementFromPoint(point.clientX, point.clientY);
+        if (!el || !el.dataset || el.dataset.id === undefined) return;
+        if (!this.wordDisplay.contains(el)) return;
+
+        var tokenId = parseInt(el.dataset.id);
+        var newStartId = Math.min(this.sentenceDrawStartId, tokenId);
+        var newEndId = Math.max(this.sentenceDrawStartId, tokenId);
+
+        if (newStartId !== this.sentenceDrawStartId || newEndId !== this.sentenceDrawEndId) {
+            // 不能跨越已有划线的句子
+            var hasConflict = false;
+            for (var i = 0; i < this.selectedSentences.length; i++) {
+                var s = this.selectedSentences[i];
+                if (!(newEndId < s.startId || newStartId > s.endId)) {
+                    hasConflict = true;
+                    break;
+                }
+            }
+            if (hasConflict) return;
+
+            this.sentenceDrawStartId = newStartId;
+            this.sentenceDrawEndId = newEndId;
+            this.renderAllTokenStyles();
+        }
+    }
+
+    // 结束划线
+    endSentenceDraw() {
+        if (!this.isDrawingSentence) return;
+        this.isDrawingSentence = false;
+
+        if (this.sentenceDrawEndId !== this.sentenceDrawStartId || this.sentenceDrawEndId - this.sentenceDrawStartId >= 2) {
+            // 保存划线句子
+            this.selectedSentences.push({
+                startId: this.sentenceDrawStartId,
+                endId: this.sentenceDrawEndId,
+                colorIndex: this.sentenceColorIndex
+            });
+            this.sentenceColorIndex = (this.sentenceColorIndex + 1) % 5;
+        }
+        this.sentenceDrawStartId = -1;
+        this.sentenceDrawEndId = -1;
+        this.renderAllTokenStyles();
+    }
+
+    // 应用所有样式（单词选中 + 划线预览 + 已保存划线）
+    renderAllTokenStyles() {
+        var self = this;
+        var tokens = this.wordDisplay.querySelectorAll('[data-id]');
+        tokens.forEach(function(tok) {
+            var id = parseInt(tok.dataset.id);
+
+            // 重置所有划线样式
+            tok.classList.remove('drawing');
+            for (var c = 0; c < 5; c++) {
+                tok.classList.remove('sentence-color-' + c);
+            }
+
+            // 当前正在画的预览
+            if (self.isDrawingSentence && id >= self.sentenceDrawStartId && id <= self.sentenceDrawEndId) {
+                tok.classList.add('drawing');
+            }
+
+            // 已保存的划线
+            for (var i = 0; i < self.selectedSentences.length; i++) {
+                var s = self.selectedSentences[i];
+                if (id >= s.startId && id <= s.endId) {
+                    tok.classList.add('sentence-color-' + s.colorIndex);
+                }
+            }
+        });
+    }
+
+    // 已保存划线的样式渲染
+    renderSentenceUnderlines() {
+        this.renderAllTokenStyles();
+    }
+
+    // ========== 长句复习 ==========
+
+    // 开始长句复习
+    startSentenceReview() {
+        if (this.sentencebook.length === 0) {
+            alert('长句本为空，请先添加长句');
+            return;
+        }
+
+        this.sentencebook.forEach(item => FSRS.initCard(item));
+        this.sentenceReviewWords = this.sentencebook.filter(item => FSRS.isDue(item));
+
+        if (this.sentenceReviewWords.length === 0) {
+            alert('暂无需要复习的长句，请稍后再来！');
+            return;
+        }
+
+        this.sentenceReviewWords.sort((a, b) =>
+            FSRS.getRetrievability(a) - FSRS.getRetrievability(b)
+        );
+
+        this.sentenceReviewIndex = 0;
+        this.sentenceReviewedCount = 0;
+
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelector('.footer').classList.add('hidden');
+        this.sentenceReviewSection.classList.remove('hidden');
+        this.renderSentenceReviewCard();
+    }
+
+    // 渲染长句复习卡片
+    renderSentenceReviewCard() {
+        if (this.sentenceReviewWords.length === 0) return;
+
+        const currentItem = this.sentenceReviewWords[this.sentenceReviewIndex];
+
+        this.sentenceReviewText.textContent = currentItem.sentence;
+        this.sentenceReviewTranslation.textContent = currentItem.translation || '无翻译';
+
+        // 预设分析内容（保持隐藏，翻卡后显示）
+        this.sentenceReviewColored.innerHTML = currentItem.segments && currentItem.segments.length > 0
+            ? this.renderSegmentsToHtml(currentItem.segments)
+            : '';
+        this.sentenceReviewBreakdown.innerHTML = this.renderBreakdownToHtml(currentItem.breakdown || '');
+        this.sentenceReviewTree.innerHTML = this.renderTreeFromBreakdown(currentItem.breakdown || '');
+
+        this.sentenceReviewProgress.textContent =
+            `${this.sentenceReviewedCount + 1} / ${this.sentenceReviewWords.length + this.sentenceReviewedCount}`;
+
+        // 重置为正面
+        this.sentenceReviewFlashcard.classList.remove('show-meaning');
+        this.sentenceReviewRatings.classList.add('hidden');
+        this.sentenceReviewAnalysis.classList.add('hidden');
+    }
+
+    // 翻转长句复习卡片
+    toggleSentenceReviewFlashcard() {
+        var isShowing = this.sentenceReviewFlashcard.classList.toggle('show-meaning');
+        if (isShowing) {
+            this.sentenceReviewRatings.classList.remove('hidden');
+            this.sentenceReviewAnalysis.classList.remove('hidden');
+        } else {
+            this.sentenceReviewRatings.classList.add('hidden');
+            this.sentenceReviewAnalysis.classList.add('hidden');
+        }
+    }
+
+    // 长句评分
+    rateSentenceCard(rating) {
+        if (this.sentenceReviewWords.length === 0) return;
+
+        var currentItem = this.sentenceReviewWords[this.sentenceReviewIndex];
+        var card = this.sentencebook.find(item => item.id === currentItem.id);
+        if (card) {
+            FSRS.schedule(card, rating, new Date());
+        }
+
+        if (rating === 1) {
+            this.sentenceReviewWords.push(currentItem);
+        } else {
+            this.sentenceReviewedCount++;
+        }
+
+        this.sentenceReviewWords.splice(this.sentenceReviewIndex, 1);
+        this.saveSentences();
+
+        if (this.sentenceReviewWords.length === 0) {
+            this.showSentenceReviewComplete();
+        } else {
+            if (this.sentenceReviewIndex >= this.sentenceReviewWords.length) {
+                this.sentenceReviewIndex = 0;
+            }
+            this.renderSentenceReviewCard();
+        }
+    }
+
+    // 长句复习完成
+    showSentenceReviewComplete() {
+        this.sentenceReviewFlashcard.classList.remove('show-meaning');
+        this.sentenceReviewRatings.classList.add('hidden');
+        this.sentenceReviewAnalysis.classList.add('hidden');
+
+        if (this.sentenceReviewedCount === 0) {
+            this.sentenceReviewText.textContent = '继续加油';
+            this.sentenceReviewTranslation.textContent = '所有长句都需要再复习，请稍后重试';
+        } else {
+            this.sentenceReviewText.textContent = '复习完成！';
+            this.sentenceReviewTranslation.textContent = '本次成功复习 ' + this.sentenceReviewedCount + ' 条长句';
+        }
+        this.sentenceReviewProgress.textContent = '复习完成';
+    }
+
+    // 退出长句复习
+    backFromSentenceReview() {
+        this.sentenceReviewWords = [];
+        this.sentenceReviewIndex = 0;
+        this.sentenceReviewedCount = 0;
+
+        this.sentenceReviewSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        this.switchPage('sentences');
+    }
+
+    // HTML 转义
+    escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
 }
 

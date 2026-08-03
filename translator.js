@@ -284,6 +284,135 @@ class Translator {
         }
     }
 
+    // 分析英文长难句结构（从句类型+语法角色+翻译+拆解+树状图）
+    async analyzeSentence(sentence) {
+        if (!this.apiKey) {
+            throw new Error('DeepSeek API密钥未配置');
+        }
+
+        const systemPrompt = `你是一个专业的英语语法分析专家。用户会提供一个英文长难句，请做三件事：
+1. 将句子翻译成中文
+2. 将句子按语法结构分段，标注每段的从句类型和语法角色
+3. 输出逐层拆解和树状图
+
+从句类型(type)：
+- "main" — 主句
+- "that-object" — that引导的宾语从句
+- "which-relative" — which引导的定语从句
+- "concessive" — although/though/while引导的让步状语从句
+- "embedded-object" — 嵌套的宾语从句（省略that）
+- "inf-purpose" — 不定式目的状语
+- "other-clause" — 其他从句/短语
+
+语法角色(role)：
+- "S" — 主语
+- "V" — 谓语/系动词
+- "O" — 宾语
+- "C" — 补语/表语/主补
+- "Attr" — 定语
+- "Adv" — 状语
+- "Conj" — 连词
+- "Rel" — 关系代词
+- "Prep" — 介词短语
+- "" — 无特殊角色（标点、冠词、普通介词等辅助词）
+
+请返回如下JSON（不要包含任何其他内容）：
+{
+  "translation": "中文翻译",
+  "segments": [
+    {"text": "The study", "type": "main", "role": "S"},
+    {"text": "found", "type": "main", "role": "V"},
+    ...
+  ],
+  "breakdown": "逐层拆解和树状图文本（用emoji标记从句类型，如🔵主句、🟢that宾语从句、🟠which定语从句、🟣让步状语从句、🔴嵌套宾语从句）"
+}
+
+segments必须覆盖句子的每一个词/标点，顺序与原文一致。
+breakdown格式示例：
+🔵 主句：The study (S) + found (V) + that... (宾语从句)
+  主句是句子的核心骨架。
+
+🟢 that宾语从句：team-building exercises (S) + which... (定语从句) + were considered (V, 被动) + too heavy-handed and intrusive (主补)
+  that从句作found的宾语，说明"发现了什么"。
+
+🌳 结构树：
+├─ 主句
+│  ├─ The study (S)
+│  ├─ found (V)
+│  └─ [that宾语从句]
+│
+└─ ...`;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: `请分析以下英文句子：\n${sentence}` }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 2000
+                }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`DeepSeek API错误: ${response.status} - ${errorText}`);
+                if (response.status === 401) {
+                    throw new Error('API密钥无效，请检查DeepSeek API密钥');
+                }
+                if (response.status === 402) {
+                    throw new Error('API余额不足，请充值DeepSeek账户');
+                }
+                throw new Error(`API请求失败: HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.choices && data.choices.length > 0) {
+                const content = data.choices[0].message.content.trim();
+                console.log('句子分析返回:', content);
+
+                let jsonStr = content;
+                const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (jsonMatch) {
+                    jsonStr = jsonMatch[1].trim();
+                }
+                const objMatch = jsonStr.match(/\{[\s\S]*\}/);
+                if (objMatch) {
+                    jsonStr = objMatch[0];
+                }
+
+                const parsed = JSON.parse(jsonStr);
+                return {
+                    translation: parsed.translation || '',
+                    segments: parsed.segments || [],
+                    breakdown: parsed.breakdown || ''
+                };
+            }
+
+            throw new Error('AI未返回有效结果');
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('DeepSeek API请求超时');
+            }
+            throw error;
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
     // 批量翻译
     async translateBatch(words) {
         const results = [];
