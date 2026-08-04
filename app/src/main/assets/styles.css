@@ -1745,9 +1745,9 @@ input[type="text"]:focus, input[type="password"]:focus {
     padding: 14px 16px;
     margin-bottom: 12px;
     border-left: 3px solid #e0e0e0;
-    overflow-x: hidden;
+    overflow-x: visible;
     word-wrap: break-word;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
 }
 
 .review-sentence-translation {
@@ -2134,6 +2134,8 @@ input[type="text"]:focus, input[type="password"]:focus {
     border-radius: 3px;
     margin: 0 1px;
     font-weight: 500;
+    word-break: normal;
+    overflow-wrap: break-word;
 }
 
 .sentence-segment.type-main { background: #eff6ff; color: #1e40af; border-bottom: 2px solid #3b82f6; }

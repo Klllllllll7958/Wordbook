@@ -511,7 +511,10 @@ class WordbookApp {
             // 短按（<500ms）选单词
             var pressTimer;
             var pressStartTime;
+            var touchJustEnded = false;  // 防止移动端 touch → 合成 mouse 事件导致双击发
+
             span.addEventListener('mousedown', function(e) {
+                if (touchJustEnded) return;
                 pressStartTime = Date.now();
                 pressTimer = setTimeout(function() {
                     // 长按触发 → 开始划线
@@ -520,6 +523,7 @@ class WordbookApp {
             });
 
             span.addEventListener('mouseup', function(e) {
+                if (touchJustEnded) return;
                 clearTimeout(pressTimer);
                 if (self.isDrawingSentence) {
                     self.endSentenceDraw();
@@ -535,6 +539,7 @@ class WordbookApp {
 
             // 触摸事件
             span.addEventListener('touchstart', function(e) {
+                touchJustEnded = false;
                 pressStartTime = Date.now();
                 pressTimer = setTimeout(function() {
                     self.startSentenceDraw(parseInt(span.dataset.id));
@@ -543,6 +548,8 @@ class WordbookApp {
 
             span.addEventListener('touchend', function(e) {
                 clearTimeout(pressTimer);
+                touchJustEnded = true;
+                setTimeout(function() { touchJustEnded = false; }, 500);
                 if (self.isDrawingSentence) {
                     self.endSentenceDraw();
                 } else if (Date.now() - pressStartTime < 500) {
@@ -552,6 +559,8 @@ class WordbookApp {
 
             span.addEventListener('touchcancel', function() {
                 clearTimeout(pressTimer);
+                touchJustEnded = true;
+                setTimeout(function() { touchJustEnded = false; }, 500);
             });
 
             this.wordDisplay.appendChild(span);
@@ -570,6 +579,17 @@ class WordbookApp {
             }
         };
 
+        // 全局松开事件 — 划线时在 wordDisplay 区域外松手也能正常结束
+        if (!this._globalDrawEndHandlersSet) {
+            this._globalDrawEndHandlersSet = true;
+            document.addEventListener('mouseup', function(e) {
+                if (self.isDrawingSentence) self.endSentenceDraw();
+            });
+            document.addEventListener('touchend', function(e) {
+                if (self.isDrawingSentence) self.endSentenceDraw();
+            });
+        }
+
         // 恢复已保存的长句颜色
         this.renderSentenceUnderlines();
     }
@@ -577,15 +597,24 @@ class WordbookApp {
     // 切换单词选中状态
     toggleWordSelection(element, word) {
         const lowerWord = word.toLowerCase();
-        
+
         if (this.selectedWords.has(lowerWord)) {
             this.selectedWords.delete(lowerWord);
-            element.classList.remove('selected');
         } else {
             this.selectedWords.add(lowerWord);
-            element.classList.add('selected');
         }
-        
+
+        // 联动文章中所有同词 span 的高亮状态
+        var self = this;
+        var allSpans = this.wordDisplay.querySelectorAll('[data-word="' + lowerWord + '"]');
+        allSpans.forEach(function(span) {
+            if (self.selectedWords.has(lowerWord)) {
+                span.classList.add('selected');
+            } else {
+                span.classList.remove('selected');
+            }
+        });
+
         this.updateSelectedCount();
     }
 
@@ -2021,12 +2050,12 @@ class WordbookApp {
     // 将 segments 数组渲染为彩色标注 HTML
     renderSegmentsToHtml(segments) {
         if (!segments || segments.length === 0) return '';
-        return '<div style="overflow-x:hidden;word-wrap:break-word;white-space:normal;">' +
+        return '<div style="white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;word-break:normal;">' +
             segments.map(seg => {
                 const typeClass = seg.type ? `type-${seg.type}` : '';
                 const title = this.escapeHtml(seg.role ? `${seg.type} — ${seg.role}` : (seg.type || ''));
                 return `<span class="sentence-segment ${typeClass}" title="${title}">${this.escapeHtml(seg.text)}</span>`;
-            }).join('') +
+            }).join(' ') +
             '</div>';
     }
 
@@ -2039,7 +2068,7 @@ class WordbookApp {
         if (!text) return '<p style="color:#999;">暂无拆解</p>';
         const escaped = this.escapeHtml(text);
         const withBreaks = escaped.replace(/\n/g, '<br>');
-        return `<div style="white-space:pre-wrap;line-height:1.8;overflow-x:hidden;word-wrap:break-word;">${withBreaks}</div>`;
+        return `<div style="white-space:pre-wrap;line-height:1.8;word-wrap:break-word;overflow-wrap:break-word;word-break:normal;">${withBreaks}</div>`;
     }
 
     // 从 breakdown 中提取树状图部分
@@ -2049,7 +2078,7 @@ class WordbookApp {
         if (treeIdx === -1) return '<p style="color:#999;">暂无树状图</p>';
         const treeText = breakdown.substring(treeIdx);
         const escaped = this.escapeHtml(treeText);
-        return `<div style="font-family:'Courier New',monospace;font-size:13px;white-space:pre;line-height:1.6;overflow-x:hidden;word-wrap:break-word;">${escaped.replace(/\n/g, '<br>')}</div>`;
+        return `<div style="font-family:'Courier New',monospace;font-size:13px;white-space:pre;line-height:1.6;overflow-x:auto;word-wrap:normal;">${escaped.replace(/\n/g, '<br>')}</div>`;
     }
 
     // ========== 长句划线选择 ==========
@@ -2108,7 +2137,7 @@ class WordbookApp {
         if (!this.isDrawingSentence) return;
         this.isDrawingSentence = false;
 
-        if (this.sentenceDrawEndId !== this.sentenceDrawStartId || this.sentenceDrawEndId - this.sentenceDrawStartId >= 2) {
+        if (this.sentenceDrawEndId !== this.sentenceDrawStartId) {
             // 保存划线句子
             this.selectedSentences.push({
                 startId: this.sentenceDrawStartId,
