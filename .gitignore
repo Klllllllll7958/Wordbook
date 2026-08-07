@@ -24,3 +24,6 @@ local.properties
 /translator.js
 /styles.css
 /index.html
+# 签名密钥 - 绝不能提交到版本控制
+*.keystore
+*.jks
