@@ -7,9 +7,20 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml
+/.idea/misc.xml
+/.idea/vcs.xml
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+# 根目录 web 文件只存放在 app/src/main/assets/ 下
+/app.js
+/dictionary.js
+/fsrs.js
+/translator.js
+/styles.css
+/index.html
