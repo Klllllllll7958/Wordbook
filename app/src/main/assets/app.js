@@ -116,7 +116,17 @@ class WordbookApp {
         this.sentenceReviewColored = document.getElementById('sentence-review-colored');
         this.sentenceReviewBreakdown = document.getElementById('sentence-review-breakdown');
         this.sentenceReviewTree = document.getElementById('sentence-review-tree');
-        
+
+        // 单词详情页面元素
+        this.wordDetailSection = document.getElementById('word-detail-section');
+        this.wordDetailCard = document.getElementById('word-detail-card');
+        this.wordDetailWord = document.getElementById('word-detail-word');
+        this.wordDetailMeaning = document.getElementById('word-detail-meaning');
+        this.wordDetailSentenceSection = document.getElementById('word-detail-sentence-section');
+        this.wordDetailSentence = document.getElementById('word-detail-sentence');
+        this.wordDetailSentenceTranslation = document.getElementById('word-detail-sentence-translation');
+        this.backFromWordDetailBtn = document.getElementById('back-from-word-detail');
+
         // API配置相关DOM元素
         this.apiKeyInput = document.getElementById('apikey-input');
         this.saveApiBtn = document.getElementById('save-api-btn');
@@ -140,36 +150,63 @@ class WordbookApp {
         this.updateSelectedCount();
         this.setupNavigation();
         this.setupPopStateListener();
+        // 设置初始历史状态，否则二级页面返回时 event.state 为 null 会导致直接退出
+        history.replaceState({ page: 'articles' }, '', '');
     }
     
     // 设置popstate事件监听器，处理返回键导航
     setupPopStateListener() {
         window.addEventListener('popstate', (event) => {
-            if (event.state) {
-                const page = event.state.page;
-                if (page === 'article-detail' || page === 'words' || page === 'settings') {
-                    // 从单词学习、单词本或设置页面返回，应该显示文章列表
-                    this.currentArticle = null;
-                    this.currentWordIndex = 0;
-                    this.shuffledWords = [];
-                    
-                    // 显示文章列表页面，不添加历史记录
-                    const navItems = document.querySelectorAll('.nav-item');
-                    navItems.forEach(item => {
-                        if (item.dataset.page === 'articles') {
-                            item.classList.add('active');
-                        } else {
-                            item.classList.remove('active');
-                        }
-                    });
-                    
-                    document.querySelectorAll('.section').forEach(section => {
-                        section.classList.add('hidden');
-                    });
-                    document.getElementById('articles-section').classList.remove('hidden');
-                } else if (page === 'articles') {
-                    // 从文章列表页面返回，应该让Android系统处理，这样点击两次返回键就会退出应用
-                }
+            if (event.state && event.state.page) {
+                // 清除二级页面状态
+                this.currentArticle = null;
+                this.currentWordIndex = 0;
+                this.shuffledWords = [];
+                this.reviewWords = [];
+                this.sentenceReviewWords = [];
+
+                // 隐藏所有二级页面
+                this.reviewSection.classList.add('hidden');
+                this.sentenceReviewSection.classList.add('hidden');
+                this.sentenceDetailSection.classList.add('hidden');
+                this.articleDetailSection.classList.add('hidden');
+                this.wordDetailSection.classList.add('hidden');
+                this.wordInputSection.classList.add('hidden');
+                this.articleInputSection.classList.add('hidden');
+                this.articleTitleSection.classList.add('hidden');
+                this.wordSelectionSection.classList.add('hidden');
+
+                // 恢复历史状态中保存的页面
+                this.showPage(event.state.page);
+            }
+            // event.state 为 null 时不做处理，让 Android 系统处理返回（退出应用）
+        });
+    }
+
+    // 显示指定页面，不添加历史记录（供 popstate 回调使用）
+    showPage(page) {
+        var sectionMap = {
+            'articles': 'articles-section',
+            'words': 'wordbook-section',
+            'sentences': 'sentence-section',
+            'settings': 'settings-section'
+        };
+
+        document.querySelectorAll('.section').forEach(function(s) { s.classList.add('hidden'); });
+        document.querySelector('.footer').classList.remove('hidden');
+
+        var sectionId = sectionMap[page];
+        if (sectionId) {
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // 更新底部导航高亮
+        var navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(function(item) {
+            if (item.dataset.page === page) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
             }
         });
     }
@@ -247,6 +284,9 @@ class WordbookApp {
         this.backFromSentenceDetailBtn.addEventListener('click', () => this.closeSentenceDetail());
         this.backFromSentenceReviewBtn.addEventListener('click', () => this.backFromSentenceReview());
         this.sentenceReviewFlashcard.addEventListener('click', () => this.toggleSentenceReviewFlashcard());
+
+        // 单词详情返回按钮
+        this.backFromWordDetailBtn.addEventListener('click', () => this.closeWordDetail());
         this.sentenceReviewRatings.querySelectorAll('.rating-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -272,42 +312,6 @@ class WordbookApp {
         });
     }
 
-    // 切换页面
-    switchPage(page) {
-        const navItems = document.querySelectorAll('.nav-item');
-        const sections = {
-            'home': ['articles-section'],
-            'articles': ['articles-section'],
-            'words': ['wordbook-section'],
-            'sentences': ['sentence-section'],
-            'settings': ['settings-section']
-        };
-
-        // 更新导航状态
-        navItems.forEach(item => {
-            if (item.dataset.page === page) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-
-        // 隐藏所有区域
-        document.querySelectorAll('.section').forEach(section => {
-            section.classList.add('hidden');
-        });
-
-        // 显示对应页面区域
-        if (sections[page]) {
-            sections[page].forEach(sectionId => {
-                const section = document.getElementById(sectionId);
-                if (section) {
-                    section.classList.remove('hidden');
-                }
-            });
-        }
-    }
-
     // 打开文章输入页面
     openArticleModal() {
         // 重置表单状态
@@ -323,7 +327,7 @@ class WordbookApp {
     closeArticleModal() {
         this.articleInputSection.classList.add('hidden');
         document.querySelector('.footer').classList.remove('hidden');
-        this.switchPage('articles');
+        this.showPage('articles');
     }
 
     // 重置文章输入表单
@@ -349,7 +353,7 @@ class WordbookApp {
     closeWordModal() {
         this.wordInputSection.classList.add('hidden');
         document.querySelector('.footer').classList.remove('hidden');
-        this.switchPage('articles');
+        this.showPage('articles');
     }
 
     // 打开添加文章选项模态框
@@ -418,7 +422,7 @@ class WordbookApp {
     closeArticleTitleModal() {
         this.articleTitleSection.classList.add('hidden');
         document.querySelector('.footer').classList.remove('hidden');
-        this.switchPage('articles');
+        this.showPage('articles');
     }
 
     // 保存文章标题
@@ -469,12 +473,11 @@ class WordbookApp {
         this.wordSelectionSection.classList.remove('hidden');
     }
 
-    // 从单词选择页面返回文章输入页面
+    // 从单词选择页面返回文章列表
     backFromWordSelection() {
         this.wordSelectionSection.classList.add('hidden');
         document.querySelector('.footer').classList.remove('hidden');
-        // 回到文章列表
-        this.switchPage('articles');
+        this.showPage('articles');
     }
 
     // 将文章分割为单词
@@ -716,7 +719,7 @@ class WordbookApp {
             this.wordSelectionSection.classList.add('hidden');
             this.articleInputSection.classList.add('hidden');
             document.querySelector('.footer').classList.remove('hidden');
-            this.switchPage('articles');
+            this.showPage('articles');
 
             this.renderArticles();
             this.renderWordbook();
@@ -860,14 +863,20 @@ class WordbookApp {
             const articleCard = document.createElement('div');
             articleCard.className = 'article-card';
             articleCard.dataset.articleId = article.id;
-            
+
             const excerpt = article.content.substring(0, 100) + (article.content.length > 100 ? '...' : '');
-            
+
+            // 统计该文章的长句数量
+            const sentenceCount = this.sentencebook.filter(
+                s => s.source === article.title
+            ).length;
+
             articleCard.innerHTML = `
                 <div class="article-card-header">
                     <h3 class="article-title">${article.title}</h3>
                     <div class="article-stats">
                         <span class="article-words">${article.words.length} 个单词</span>
+                        ${sentenceCount > 0 ? `<span class="article-sentences">${sentenceCount} 个长句</span>` : ''}
                         <span class="article-date">${new Date(article.addedAt).toLocaleDateString()}</span>
                     </div>
                 </div>
@@ -1029,7 +1038,7 @@ class WordbookApp {
             `;
             
             // 添加点击事件，可用于编辑或查看详情
-            listItem.addEventListener('click', () => this.editWord(item.word));
+            listItem.addEventListener('click', () => this.openWordDetail(item.word));
             
             // 添加长按事件（删除单词）
             let longPressTimer;
@@ -1086,7 +1095,41 @@ class WordbookApp {
         });
     }
 
-    // 编辑单词
+    // 打开单词详情页
+    openWordDetail(word) {
+        var wordInfo = this.wordbook.find(function(item) {
+            return item.word.toLowerCase() === word.toLowerCase();
+        });
+        if (!wordInfo) return;
+
+        this.wordDetailWord.textContent = wordInfo.word;
+        this.wordDetailMeaning.textContent = wordInfo.meaning;
+
+        // 例句
+        if (wordInfo.sentence) {
+            this.wordDetailSentence.innerHTML = this.renderHighlightedText(wordInfo.sentence);
+            this.wordDetailSentenceTranslation.innerHTML = this.renderHighlightedText(
+                wordInfo.sentenceTranslation || ''
+            );
+            this.wordDetailSentenceSection.classList.remove('hidden');
+        } else {
+            this.wordDetailSentenceSection.classList.add('hidden');
+        }
+
+        // 显示详情页
+        document.querySelectorAll('.section').forEach(function(s) { s.classList.add('hidden'); });
+        document.querySelector('.footer').classList.add('hidden');
+        this.wordDetailSection.classList.remove('hidden');
+        history.pushState({ page: 'word-detail' }, '', '');
+    }
+
+    // 关闭单词详情页
+    closeWordDetail() {
+        this.wordDetailSection.classList.add('hidden');
+        history.back();
+    }
+
+    // 编辑单词（保留，供其他场景使用）
     editWord(word) {
         const existingWord = this.wordbook.find(item => item.word === word);
         if (existingWord) {
@@ -1314,23 +1357,34 @@ class WordbookApp {
     openArticleDetail(article) {
         this.currentArticle = article;
         this.currentWordIndex = 0;
-        
+
         // 使用Fisher-Yates洗牌算法完全随机打乱单词顺序
         this.shuffledWords = [...article.words];
         for (let i = this.shuffledWords.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [this.shuffledWords[i], this.shuffledWords[j]] = [this.shuffledWords[j], this.shuffledWords[i]];
         }
-        
+
+        // 对于有原文的文章（type !== 'word'），隐藏翻转卡片和导航按钮，只显示原文
+        var cardContainer = document.querySelector('#article-detail-section .vocabulary-card-container');
+        var navContainer = document.querySelector('#article-detail-section .vocabulary-navigation');
+        if (article.type !== 'word') {
+            if (cardContainer) cardContainer.classList.add('hidden');
+            if (navContainer) navContainer.classList.add('hidden');
+        } else {
+            if (cardContainer) cardContainer.classList.remove('hidden');
+            if (navContainer) navContainer.classList.remove('hidden');
+        }
+
         // 渲染文章详情
         this.renderArticleDetail();
-        
+
         // 显示文章详情页面
         document.querySelectorAll('.section').forEach(section => {
             section.classList.add('hidden');
         });
         this.articleDetailSection.classList.remove('hidden');
-        
+
         // 添加历史记录，以便返回键能正确工作
         history.pushState({ page: 'article-detail' }, '', '');
     }
@@ -1340,9 +1394,7 @@ class WordbookApp {
         this.currentArticle = null;
         this.currentWordIndex = 0;
         this.shuffledWords = [];
-        
-        // 显示文章列表页面
-        this.switchPage('articles');
+        history.back();
     }
 
     // 切换页面
@@ -1380,40 +1432,40 @@ class WordbookApp {
             });
         }
         
-        // 添加历史记录，以便返回键能正确工作
+        // 主 tab 切换不累积历史记录，用 replaceState
         if (page === 'articles' || page === 'words' || page === 'sentences' || page === 'settings') {
-            history.pushState({ page: page }, '', '');
+            history.replaceState({ page: page }, '', '');
         }
     }
 
     // 渲染文章详情
     renderArticleDetail() {
         if (!this.currentArticle) return;
-        
+
         // 设置文章标题
         this.articleDetailTitle.textContent = this.currentArticle.title;
-        
+
         // 重新初始化shuffledWords数组，确保包含新添加的单词
         this.shuffledWords = [...this.currentArticle.words];
         for (let i = this.shuffledWords.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [this.shuffledWords[i], this.shuffledWords[j]] = [this.shuffledWords[j], this.shuffledWords[i]];
         }
-        
-        // 获取原文区域和操作区域
-        const vocabularyArticle = document.querySelector('.vocabulary-article');
-        const vocabularyActions = document.querySelector('.vocabulary-actions');
-        
+
+        // 获取原文区域和操作区域（限定在文章详情区域）
+        const vocabularyArticle = document.querySelector('#article-detail-section .vocabulary-article');
+        const vocabularyActions = document.querySelector('#article-detail-section .vocabulary-actions');
+
         // 根据文章类型显示不同的界面
         if (this.currentArticle.type === 'word') {
             // 隐藏原文区域
             if (vocabularyArticle) {
                 vocabularyArticle.classList.add('hidden');
             }
-            
+
             // 显示操作按钮
             if (!vocabularyActions) {
-                const navContainer = document.querySelector('.vocabulary-navigation');
+                var navContainer = document.querySelector('#article-detail-section .vocabulary-navigation');
                 if (navContainer) {
                     const actionsDiv = document.createElement('div');
                     actionsDiv.className = 'vocabulary-actions';
@@ -1422,45 +1474,105 @@ class WordbookApp {
                         <button id="add-word-to-article-btn" class="vocabulary-action-btn btn-primary">添加单词</button>
                     `;
                     navContainer.insertAdjacentElement('afterend', actionsDiv);
-                    
+
                     // 添加按钮事件
                     document.getElementById('view-words-btn').addEventListener('click', () => this.viewArticleWords());
                     document.getElementById('add-word-to-article-btn').addEventListener('click', () => this.addWordToArticle());
                 }
             }
+
+            // 渲染单词卡片
+            this.renderWordCard();
         } else {
-            // 显示原文区域
+            // 显示原文区域，使用新的高亮方法同时高亮单词和长难句
             if (vocabularyArticle) {
                 vocabularyArticle.classList.remove('hidden');
-                // 渲染文章原文，高亮选中的单词
-                this.articleOriginalContent.innerHTML = this.highlightWords(this.currentArticle.content, this.currentArticle.words);
+                // 获取该文章关联的长句
+                var articleTitle = this.currentArticle.title;
+                var articleSentences = this.sentencebook.filter(function(s) {
+                    return s.source === articleTitle;
+                });
+                // 使用新的高亮方法：同时高亮单词和长难句
+                this.articleOriginalContent.innerHTML = this.highlightContent(
+                    this.currentArticle.content,
+                    this.currentArticle.words,
+                    articleSentences
+                );
+
+                // 在文章标题下显示单词和长句统计
+                var existingStats = vocabularyArticle.querySelector('.article-stats-row');
+                if (existingStats) existingStats.remove();
+                var statsRow = document.createElement('div');
+                statsRow.className = 'article-stats-row';
+                statsRow.innerHTML = '<span class="article-stat-word">📚 ' + this.currentArticle.words.length + ' 个单词</span>' +
+                    (articleSentences.length > 0 ? '<span class="article-stat-sentence">📐 ' + articleSentences.length + ' 个长句</span>' : '');
+                var articleTitleEl = vocabularyArticle.querySelector('.vocabulary-article-title');
+                if (articleTitleEl) {
+                    articleTitleEl.insertAdjacentElement('afterend', statsRow);
+                }
             }
-            
+
             // 隐藏操作按钮
             if (vocabularyActions) {
                 vocabularyActions.remove();
             }
         }
-        
-        // 渲染单词卡片
-        this.renderWordCard();
     }
 
-    // 高亮文章中的单词
-    highlightWords(content, words) {
-        let result = content;
-        
-        // 按单词长度降序排序，避免短单词匹配长单词的一部分
-        const sortedWords = [...words].sort((a, b) => b.length - a.length);
-        
-        sortedWords.forEach(word => {
-            // 转义正则表达式中的特殊字符
-            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // 使用正则表达式匹配整个单词
-            const regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
-            result = result.replace(regex, '<span class="highlighted-word">$&</span>');
+    // 高亮文章中的单词和长难句
+    // sentences: 该文章关联的长句数组（从sentencebook中筛选）
+    highlightContent(content, words, sentences) {
+        if (!content) return '';
+
+        // 按长度降序排序（长句和单词都要从长到短处理，避免短文本误匹配长文本）
+        var sortedSentences = (sentences || []).slice().sort(function(a, b) {
+            return b.sentence.length - a.sentence.length;
         });
-        
+        var sortedWords = (words || []).slice().sort(function(a, b) {
+            return b.length - a.length;
+        });
+
+        // 辅助函数：对文本中的单词做高亮
+        var self = this;
+        function highlightWordsInText(text) {
+            var result = text;
+            sortedWords.forEach(function(word) {
+                var escapedWord = self.escapeHtml(word);
+                var escapedForRegex = escapedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                var regex = new RegExp('\\b' + escapedForRegex + '\\b', 'gi');
+                result = result.replace(regex, '<span class="highlighted-word">$&</span>');
+            });
+            return result;
+        }
+
+        // 策略：先用唯一占位符替换长难句，高亮剩余文本中的单词，再还原长难句（长难句内的单词也做高亮）
+        var result = this.escapeHtml(content);
+        var placeholderMap = []; // [{placeholder, escapedAndHighlighted}]
+
+        sortedSentences.forEach(function(sent, i) {
+            var escapedSentence = this.escapeHtml(sent.sentence);
+            var idx = result.indexOf(escapedSentence);
+            if (idx !== -1) {
+                var placeholder = '__SENTENCE_PLACEHOLDER_' + i + '__';
+                result = result.split(escapedSentence).join(placeholder);
+                // 对长难句内部的单词也做高亮，然后整句用下划线标记
+                placeholderMap.push({
+                    placeholder: placeholder,
+                    escaped: highlightWordsInText(escapedSentence)
+                });
+            }
+        }, this);
+
+        // 在占位符保护下高亮单词（处理不在长难句内的文本）
+        result = highlightWordsInText(result);
+
+        // 还原长难句占位符为高亮span（内部单词已高亮 + 整句下划线）
+        placeholderMap.forEach(function(item) {
+            result = result.split(item.placeholder).join(
+                '<span class="highlighted-sentence">' + item.escaped + '</span>'
+            );
+        });
+
         return result;
     }
 
@@ -1616,10 +1728,7 @@ class WordbookApp {
         this.reviewWords = [];
         this.currentReviewIndex = 0;
         this.reviewedCount = 0;
-
-        this.reviewSection.classList.add('hidden');
-        document.querySelector('.footer').classList.remove('hidden');
-        this.switchPage('words');
+        history.back();
     }
 
     // 渲染复习卡片
@@ -2043,8 +2152,7 @@ class WordbookApp {
     // 关闭长句详情
     closeSentenceDetail() {
         this.sentenceDetailSection.classList.add('hidden');
-        document.querySelector('.footer').classList.remove('hidden');
-        this.switchPage('sentences');
+        history.back();
     }
 
     // 将 segments 数组渲染为彩色标注 HTML
@@ -2301,10 +2409,61 @@ class WordbookApp {
         this.sentenceReviewWords = [];
         this.sentenceReviewIndex = 0;
         this.sentenceReviewedCount = 0;
+        history.back();
+    }
 
-        this.sentenceReviewSection.classList.add('hidden');
-        document.querySelector('.footer').classList.remove('hidden');
-        this.switchPage('sentences');
+    // 处理 Android 系统返回键，返回字符串告知 Android 当前状态
+    onBackPressed() {
+        try {
+            // 优先关闭当前可见的二级页面 / 模态框
+            if (!this.reviewSection.classList.contains('hidden')) {
+                this.backFromReview();
+                return 'modal';
+            }
+            if (!this.sentenceReviewSection.classList.contains('hidden')) {
+                this.backFromSentenceReview();
+                return 'modal';
+            }
+            if (!this.sentenceDetailSection.classList.contains('hidden')) {
+                this.closeSentenceDetail();
+                return 'modal';
+            }
+            if (!this.articleDetailSection.classList.contains('hidden')) {
+                this.backToArticles();
+                return 'modal';
+            }
+            if (!this.wordSelectionSection.classList.contains('hidden')) {
+                this.backFromWordSelection();
+                return 'modal';
+            }
+            if (!this.wordDetailSection.classList.contains('hidden')) {
+                this.closeWordDetail();
+                return 'modal';
+            }
+            if (!this.wordInputSection.classList.contains('hidden')) {
+                this.closeWordModal();
+                return 'modal';
+            }
+            if (!this.articleInputSection.classList.contains('hidden')) {
+                this.closeArticleModal();
+                return 'modal';
+            }
+            if (!this.articleTitleSection.classList.contains('hidden')) {
+                this.closeArticleTitleModal();
+                return 'modal';
+            }
+
+            // 没有弹出层 → 检查 JS 历史记录
+            if (window.history.length > 1) {
+                window.history.back();
+                return 'history';
+            }
+
+            // 已在根页面 → 交给 Android 处理双击退出
+            return 'root';
+        } catch (e) {
+            return 'error';
+        }
     }
 
     // HTML 转义

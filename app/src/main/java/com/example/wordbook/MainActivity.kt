@@ -1,28 +1,26 @@
 package com.example.wordbook
 
 import android.os.Bundle
+import android.util.Log
 import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.WebSettings
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
+import android.widget.Toast
 import androidx.activity.ComponentActivity
-import java.io.ByteArrayInputStream
-import java.io.InputStream
+import androidx.activity.OnBackPressedCallback
 
 class MainActivity : ComponentActivity() {
     private lateinit var webView: WebView
-    
+    private var lastBackPressTime = 0L
+
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         webView = WebView(this)
         setContentView(webView)
-        
+
         val webSettings = webView.settings
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true
-        webSettings.databaseEnabled = true
         webSettings.allowFileAccess = true
         webSettings.allowContentAccess = true
         webSettings.setSupportZoom(true)
@@ -30,24 +28,34 @@ class MainActivity : ComponentActivity() {
         webSettings.displayZoomControls = false
         webSettings.allowUniversalAccessFromFileURLs = true
         webSettings.allowFileAccessFromFileURLs = true
-        
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                // 允许所有跨域请求
-                return super.shouldInterceptRequest(view, request)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                webView.evaluateJavascript("app.onBackPressed()") { result ->
+                    Log.d("Wordbook", "app.onBackPressed() → $result")
+                    when {
+                        result == "\"root\"" || result == "\"error\"" || result == "null" ->
+                            handleRootBackPress()
+                        else ->
+                            Log.d("Wordbook", "JS 已处理，Android 不做操作")
+                    }
+                }
             }
-        }
-        
+        })
+
         webView.loadUrl("file:///android_asset/index.html")
     }
-    
-    override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            // 如果WebView可以返回上一页，则返回
-            webView.goBack()
+
+    private fun handleRootBackPress() {
+        val now = System.currentTimeMillis()
+        val elapsed = now - lastBackPressTime
+        Log.d("Wordbook", "handleRootBackPress elapsed=${elapsed}ms")
+        if (elapsed > 2000) {
+            Toast.makeText(this, "再按一次返回键退出应用", Toast.LENGTH_SHORT).show()
+            lastBackPressTime = now
         } else {
-            // 如果已经在首页，则退出应用
-            super.onBackPressed()
+            Log.d("Wordbook", "finish()")
+            finish()
         }
     }
 }
