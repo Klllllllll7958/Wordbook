@@ -93,6 +93,15 @@ class WordbookApp {
         this.reviewSentenceOriginal = document.getElementById('review-sentence-original');
         this.reviewSentenceTranslation = document.getElementById('review-sentence-translation');
 
+        // 复习完成面板元素
+        this.reviewComplete = document.getElementById('review-complete');
+        this.reviewCompleteSubtitle = document.getElementById('complete-subtitle');
+        this.statGood = document.getElementById('stat-good');
+        this.statHard = document.getElementById('stat-hard');
+        this.statAgain = document.getElementById('stat-again');
+        this.retryForgottenBtn = document.getElementById('retry-forgotten-btn');
+        this.backFromCompleteBtn = document.getElementById('back-from-complete-btn');
+
         // 长句相关元素
         this.sentenceSection = document.getElementById('sentence-section');
         this.sentenceList = document.getElementById('sentence-list');
@@ -116,6 +125,15 @@ class WordbookApp {
         this.sentenceReviewColored = document.getElementById('sentence-review-colored');
         this.sentenceReviewBreakdown = document.getElementById('sentence-review-breakdown');
         this.sentenceReviewTree = document.getElementById('sentence-review-tree');
+
+        // 长句复习完成面板元素
+        this.sentenceReviewComplete = document.getElementById('sentence-review-complete');
+        this.sentenceCompleteSubtitle = document.getElementById('sentence-complete-subtitle');
+        this.sentenceStatGood = document.getElementById('sentence-stat-good');
+        this.sentenceStatHard = document.getElementById('sentence-stat-hard');
+        this.sentenceStatAgain = document.getElementById('sentence-stat-again');
+        this.sentenceRetryForgottenBtn = document.getElementById('sentence-retry-forgotten-btn');
+        this.sentenceBackFromCompleteBtn = document.getElementById('sentence-back-from-complete-btn');
 
         // 单词详情页面元素
         this.wordDetailSection = document.getElementById('word-detail-section');
@@ -279,6 +297,10 @@ class WordbookApp {
             });
         });
 
+        // 复习完成面板按钮
+        this.retryForgottenBtn.addEventListener('click', () => this.retryForgotten());
+        this.backFromCompleteBtn.addEventListener('click', () => this.backFromReview());
+
         // 长句相关事件
         this.sentenceReviewBtn.addEventListener('click', () => this.startSentenceReview());
         this.backFromSentenceDetailBtn.addEventListener('click', () => this.closeSentenceDetail());
@@ -294,6 +316,10 @@ class WordbookApp {
                 this.rateSentenceCard(rating);
             });
         });
+
+        // 长句复习完成面板按钮
+        this.sentenceRetryForgottenBtn.addEventListener('click', () => this.retrySentenceForgotten());
+        this.sentenceBackFromCompleteBtn.addEventListener('click', () => this.backFromSentenceReview());
 
         // 长句复习滑动手势
         this.setupSentenceReviewSwipe();
@@ -1701,8 +1727,48 @@ class WordbookApp {
         // 筛选到期需要复习的单词
         this.reviewWords = this.wordbook.filter(card => FSRS.isDue(card));
 
+        // 初始化评分统计
+        this.reviewStats = { good: 0, hard: 0, again: 0 };
+        this.reviewForgottenCards = new Set();
+
+        // 隐藏所有section和footer，显示复习页面
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelector('.footer').classList.add('hidden');
+        this.reviewSection.classList.remove('hidden');
+
         if (this.reviewWords.length === 0) {
-            alert('暂无需要复习的单词，所有单词都还在记忆周期内。\n请稍后再来复习！');
+            // 全部单词都在记忆周期内，显示提示面板
+            this.reviewFlashcard.parentElement.classList.add('hidden');
+            this.reviewRatings.classList.add('hidden');
+            this.reviewSentenceSection.classList.add('hidden');
+
+            // 隐藏统计数字
+            this.reviewComplete.querySelector('.complete-stats').classList.add('hidden');
+            this.reviewComplete.querySelector('.complete-icon').textContent = '🎯';
+            this.reviewComplete.querySelector('.complete-title').textContent = '暂无待复习单词';
+
+            // 找到最早到期的卡片，显示下次复习时间
+            var nextCard = null;
+            var now = Date.now();
+            this.wordbook.forEach(function(card) {
+                if (!card.due) return;
+                var dueTime = new Date(card.due).getTime();
+                if (dueTime > now && (!nextCard || dueTime < new Date(nextCard.due).getTime())) {
+                    nextCard = card;
+                }
+            });
+            if (nextCard) {
+                this.reviewCompleteSubtitle.textContent =
+                    '⏱ 最近一次复习：' + FSRS.getIntervalDescription(nextCard);
+                this.reviewCompleteSubtitle.classList.remove('hidden');
+            } else {
+                this.reviewCompleteSubtitle.classList.add('hidden');
+            }
+
+            this.retryForgottenBtn.classList.remove('hidden');
+            this.retryForgottenBtn.textContent = '📚 复习全部单词（' + this.wordbook.length + ' 张）';
+            this.reviewComplete.classList.remove('hidden');
+            this.reviewProgress.textContent = '全部在周期内';
             return;
         }
 
@@ -1714,10 +1780,11 @@ class WordbookApp {
         this.currentReviewIndex = 0;
         this.reviewedCount = 0;
 
-        // 隐藏所有section和footer，显示复习页面
-        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-        document.querySelector('.footer').classList.add('hidden');
-        this.reviewSection.classList.remove('hidden');
+        // 隐藏完成面板，显示卡片和评分区域
+        this.reviewComplete.classList.add('hidden');
+        this.reviewFlashcard.parentElement.classList.remove('hidden');
+        this.reviewRatings.classList.add('hidden');
+        this.reviewSentenceSection.classList.add('hidden');
 
         // 渲染第一张卡片
         this.renderReviewCard();
@@ -1728,7 +1795,13 @@ class WordbookApp {
         this.reviewWords = [];
         this.currentReviewIndex = 0;
         this.reviewedCount = 0;
-        history.back();
+        // 重置面板状态：隐藏完成面板，恢复卡片显示，确保下次进入是干净状态
+        this.reviewComplete.classList.add('hidden');
+        this.reviewFlashcard.parentElement.classList.remove('hidden');
+        // 直接隐藏复习页面，恢复单词本页面（不走 history.back，因为 startReview 未 pushState）
+        this.reviewSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        this.showPage('words');
     }
 
     // 渲染复习卡片
@@ -1783,6 +1856,19 @@ class WordbookApp {
         if (this.reviewWords.length === 0) return;
 
         var currentItem = this.reviewWords[this.currentReviewIndex];
+        var wordKey = currentItem.word.toLowerCase();
+
+        // 记录评分统计
+        if (rating === 3) {
+            this.reviewStats.good++;
+            this.reviewForgottenCards.delete(wordKey);
+        } else if (rating === 2) {
+            this.reviewStats.hard++;
+            this.reviewForgottenCards.delete(wordKey);
+        } else if (rating === 1) {
+            this.reviewStats.again++;
+            this.reviewForgottenCards.add(wordKey);
+        }
 
         // 在 wordbook 中找到对应卡片并更新
         var card = this.wordbook.find(
@@ -1819,19 +1905,67 @@ class WordbookApp {
 
     // 复习完成
     showReviewComplete() {
-        this.reviewFlashcard.classList.remove('show-meaning');
+        // 隐藏卡片和评分按钮，显示完成面板
+        this.reviewFlashcard.parentElement.classList.add('hidden');
         this.reviewRatings.classList.add('hidden');
+        this.reviewSentenceSection.classList.add('hidden');
 
-        if (this.reviewedCount === 0) {
-            // 所有卡片都点了"忘记"
-            this.reviewWord.textContent = '继续加油';
-            this.reviewMeaning.textContent = '所有卡片都需要再复习，请稍后重试';
+        // 恢复面板图标和标题（上一次可能是"暂无待复习"状态）
+        this.reviewComplete.querySelector('.complete-icon').textContent = '🎉';
+        this.reviewComplete.querySelector('.complete-title').textContent = '复习完成！';
+        this.reviewCompleteSubtitle.classList.add('hidden');
+        this.reviewComplete.querySelector('.complete-stats').classList.remove('hidden');
+
+        // 填入统计数据
+        this.statGood.textContent = this.reviewStats.good;
+        this.statHard.textContent = this.reviewStats.hard;
+        this.statAgain.textContent = this.reviewStats.again;
+
+        // 如果没有忘记的卡片，隐藏"再复习"按钮
+        if (this.reviewForgottenCards.size === 0) {
+            this.retryForgottenBtn.classList.add('hidden');
         } else {
-            this.reviewWord.textContent = '复习完成！';
-            this.reviewMeaning.textContent =
-                '本次成功复习 ' + this.reviewedCount + ' 个单词';
+            this.retryForgottenBtn.classList.remove('hidden');
+            this.retryForgottenBtn.textContent =
+                '🔄 再复习一遍忘记的（' + this.reviewForgottenCards.size + ' 张）';
         }
+
+        // 显示完成面板
+        this.reviewComplete.classList.remove('hidden');
         this.reviewProgress.textContent = '复习完成';
+    }
+
+    // 重新复习忘记的卡片（也用于"复习全部"场景）
+    retryForgotten() {
+        var self = this;
+
+        // 如果忘记集合为空（从"暂无待复习"面板点击），复习全部单词
+        if (this.reviewForgottenCards.size === 0) {
+            this.reviewWords = [...this.wordbook];
+        } else {
+            this.reviewWords = this.wordbook.filter(function(card) {
+                return self.reviewForgottenCards.has(card.word.toLowerCase());
+            });
+        }
+
+        if (this.reviewWords.length === 0) {
+            this.backFromReview();
+            return;
+        }
+
+        // 确保卡片有 FSRS 字段
+        this.reviewWords.forEach(function(card) { FSRS.initCard(card); });
+
+        // 重置索引和统计
+        this.currentReviewIndex = 0;
+        this.reviewedCount = 0;
+        this.reviewStats = { good: 0, hard: 0, again: 0 };
+        this.reviewForgottenCards = new Set();
+
+        // 隐藏完成面板，显示卡片
+        this.reviewComplete.classList.add('hidden');
+        this.reviewFlashcard.parentElement.classList.remove('hidden');
+        this.renderReviewCard();
     }
 
     // ========== 复习卡片滑动手势（灵感来自 reactbits.dev CardSwap） ==========
@@ -2304,8 +2438,47 @@ class WordbookApp {
         this.sentencebook.forEach(item => FSRS.initCard(item));
         this.sentenceReviewWords = this.sentencebook.filter(item => FSRS.isDue(item));
 
+        // 初始化评分统计
+        this.sentenceReviewStats = { good: 0, hard: 0, again: 0 };
+        this.sentenceReviewForgotten = new Set();
+
+        // 隐藏所有section和footer，显示复习页面
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelector('.footer').classList.add('hidden');
+        this.sentenceReviewSection.classList.remove('hidden');
+
         if (this.sentenceReviewWords.length === 0) {
-            alert('暂无需要复习的长句，请稍后再来！');
+            // 全部长句都在记忆周期内，显示提示面板
+            this.sentenceReviewFlashcard.parentElement.classList.add('hidden');
+            this.sentenceReviewRatings.classList.add('hidden');
+            this.sentenceReviewAnalysis.classList.add('hidden');
+
+            this.sentenceReviewComplete.querySelector('.complete-stats').classList.add('hidden');
+            this.sentenceReviewComplete.querySelector('.complete-icon').textContent = '🎯';
+            this.sentenceReviewComplete.querySelector('.complete-title').textContent = '暂无待复习长句';
+
+            // 找到最早到期的长句
+            var nextSent = null;
+            var now = Date.now();
+            this.sentencebook.forEach(function(item) {
+                if (!item.due) return;
+                var dueTime = new Date(item.due).getTime();
+                if (dueTime > now && (!nextSent || dueTime < new Date(nextSent.due).getTime())) {
+                    nextSent = item;
+                }
+            });
+            if (nextSent) {
+                this.sentenceCompleteSubtitle.textContent =
+                    '⏱ 最近一次复习：' + FSRS.getIntervalDescription(nextSent);
+                this.sentenceCompleteSubtitle.classList.remove('hidden');
+            } else {
+                this.sentenceCompleteSubtitle.classList.add('hidden');
+            }
+
+            this.sentenceRetryForgottenBtn.classList.remove('hidden');
+            this.sentenceRetryForgottenBtn.textContent = '📚 复习全部长句（' + this.sentencebook.length + ' 条）';
+            this.sentenceReviewComplete.classList.remove('hidden');
+            this.sentenceReviewProgress.textContent = '全部在周期内';
             return;
         }
 
@@ -2316,9 +2489,12 @@ class WordbookApp {
         this.sentenceReviewIndex = 0;
         this.sentenceReviewedCount = 0;
 
-        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-        document.querySelector('.footer').classList.add('hidden');
-        this.sentenceReviewSection.classList.remove('hidden');
+        // 隐藏完成面板，显示卡片
+        this.sentenceReviewComplete.classList.add('hidden');
+        this.sentenceReviewFlashcard.parentElement.classList.remove('hidden');
+        this.sentenceReviewRatings.classList.add('hidden');
+        this.sentenceReviewAnalysis.classList.add('hidden');
+
         this.renderSentenceReviewCard();
     }
 
@@ -2364,6 +2540,18 @@ class WordbookApp {
         if (this.sentenceReviewWords.length === 0) return;
 
         var currentItem = this.sentenceReviewWords[this.sentenceReviewIndex];
+
+        // 记录评分统计
+        if (rating === 3) {
+            this.sentenceReviewStats.good++;
+            this.sentenceReviewForgotten.delete(currentItem.id);
+        } else if (rating === 2) {
+            this.sentenceReviewStats.hard++;
+            this.sentenceReviewForgotten.delete(currentItem.id);
+        } else if (rating === 1) {
+            this.sentenceReviewStats.again++;
+            this.sentenceReviewForgotten.add(currentItem.id);
+        }
         var card = this.sentencebook.find(item => item.id === currentItem.id);
         if (card) {
             FSRS.schedule(card, rating, new Date());
@@ -2390,18 +2578,64 @@ class WordbookApp {
 
     // 长句复习完成
     showSentenceReviewComplete() {
-        this.sentenceReviewFlashcard.classList.remove('show-meaning');
+        // 隐藏卡片和评分按钮，显示完成面板
+        this.sentenceReviewFlashcard.parentElement.classList.add('hidden');
         this.sentenceReviewRatings.classList.add('hidden');
         this.sentenceReviewAnalysis.classList.add('hidden');
 
-        if (this.sentenceReviewedCount === 0) {
-            this.sentenceReviewText.textContent = '继续加油';
-            this.sentenceReviewTranslation.textContent = '所有长句都需要再复习，请稍后重试';
+        // 恢复面板状态（上一次可能是"暂无待复习"）
+        this.sentenceReviewComplete.querySelector('.complete-icon').textContent = '🎉';
+        this.sentenceReviewComplete.querySelector('.complete-title').textContent = '长句复习完成！';
+        this.sentenceCompleteSubtitle.classList.add('hidden');
+        this.sentenceReviewComplete.querySelector('.complete-stats').classList.remove('hidden');
+
+        // 填入统计数据
+        this.sentenceStatGood.textContent = this.sentenceReviewStats.good;
+        this.sentenceStatHard.textContent = this.sentenceReviewStats.hard;
+        this.sentenceStatAgain.textContent = this.sentenceReviewStats.again;
+
+        // 如果没有忘记的，隐藏"再复习"按钮
+        if (this.sentenceReviewForgotten.size === 0) {
+            this.sentenceRetryForgottenBtn.classList.add('hidden');
         } else {
-            this.sentenceReviewText.textContent = '复习完成！';
-            this.sentenceReviewTranslation.textContent = '本次成功复习 ' + this.sentenceReviewedCount + ' 条长句';
+            this.sentenceRetryForgottenBtn.classList.remove('hidden');
+            this.sentenceRetryForgottenBtn.textContent =
+                '🔄 再复习一遍忘记的（' + this.sentenceReviewForgotten.size + ' 条）';
         }
+
+        // 显示完成面板
+        this.sentenceReviewComplete.classList.remove('hidden');
         this.sentenceReviewProgress.textContent = '复习完成';
+    }
+
+    // 重新复习忘记的长句（也用于"复习全部"场景）
+    retrySentenceForgotten() {
+        var self = this;
+
+        // 如果忘记集合为空（从"暂无待复习"面板点击），复习全部长句
+        if (this.sentenceReviewForgotten.size === 0) {
+            this.sentenceReviewWords = [...this.sentencebook];
+        } else {
+            this.sentenceReviewWords = this.sentencebook.filter(function(item) {
+                return self.sentenceReviewForgotten.has(item.id);
+            });
+        }
+
+        if (this.sentenceReviewWords.length === 0) {
+            this.backFromSentenceReview();
+            return;
+        }
+
+        this.sentenceReviewWords.forEach(function(item) { FSRS.initCard(item); });
+
+        this.sentenceReviewIndex = 0;
+        this.sentenceReviewedCount = 0;
+        this.sentenceReviewStats = { good: 0, hard: 0, again: 0 };
+        this.sentenceReviewForgotten = new Set();
+
+        this.sentenceReviewComplete.classList.add('hidden');
+        this.sentenceReviewFlashcard.parentElement.classList.remove('hidden');
+        this.renderSentenceReviewCard();
     }
 
     // 退出长句复习
@@ -2409,7 +2643,13 @@ class WordbookApp {
         this.sentenceReviewWords = [];
         this.sentenceReviewIndex = 0;
         this.sentenceReviewedCount = 0;
-        history.back();
+        // 重置面板状态：隐藏完成面板，恢复卡片显示
+        this.sentenceReviewComplete.classList.add('hidden');
+        this.sentenceReviewFlashcard.parentElement.classList.remove('hidden');
+        // 直接隐藏复习页面，恢复长句本页面（不走 history.back，因为 startSentenceReview 未 pushState）
+        this.sentenceReviewSection.classList.add('hidden');
+        document.querySelector('.footer').classList.remove('hidden');
+        this.showPage('sentences');
     }
 
     // 处理 Android 系统返回键，返回字符串告知 Android 当前状态

@@ -228,6 +228,35 @@
                 <div class="review-sentence-text review-sentence-translation" id="review-sentence-translation"></div>
             </div>
 
+            <!-- 复习完成面板 -->
+            <div class="review-complete hidden" id="review-complete">
+                <div class="complete-icon">🎉</div>
+                <h3 class="complete-title">复习完成！</h3>
+                <p class="complete-subtitle hidden" id="complete-subtitle"></p>
+                <div class="complete-stats">
+                    <div class="stat-item stat-good">
+                        <span class="stat-num" id="stat-good">0</span>
+                        <span class="stat-label">已掌握</span>
+                    </div>
+                    <div class="stat-item stat-hard">
+                        <span class="stat-num" id="stat-hard">0</span>
+                        <span class="stat-label">模糊</span>
+                    </div>
+                    <div class="stat-item stat-again">
+                        <span class="stat-num" id="stat-again">0</span>
+                        <span class="stat-label">忘记</span>
+                    </div>
+                </div>
+                <div class="complete-actions">
+                    <button class="btn-primary" id="retry-forgotten-btn">
+                        🔄 再复习一遍忘记的
+                    </button>
+                    <button class="btn-secondary" id="back-from-complete-btn">
+                        🏠 返回单词本
+                    </button>
+                </div>
+            </div>
+
         </section>
 
         <!-- 长句复习页面 -->
@@ -275,6 +304,35 @@
                 <div class="review-sentence-text" id="sentence-review-breakdown"></div>
                 <div class="review-sentence-label">🌳 结构树状图</div>
                 <div class="review-sentence-text review-sentence-translation" id="sentence-review-tree"></div>
+            </div>
+
+            <!-- 长句复习完成面板 -->
+            <div class="review-complete hidden" id="sentence-review-complete">
+                <div class="complete-icon">🎉</div>
+                <h3 class="complete-title">长句复习完成！</h3>
+                <p class="complete-subtitle hidden" id="sentence-complete-subtitle"></p>
+                <div class="complete-stats">
+                    <div class="stat-item stat-good">
+                        <span class="stat-num" id="sentence-stat-good">0</span>
+                        <span class="stat-label">已掌握</span>
+                    </div>
+                    <div class="stat-item stat-hard">
+                        <span class="stat-num" id="sentence-stat-hard">0</span>
+                        <span class="stat-label">模糊</span>
+                    </div>
+                    <div class="stat-item stat-again">
+                        <span class="stat-num" id="sentence-stat-again">0</span>
+                        <span class="stat-label">忘记</span>
+                    </div>
+                </div>
+                <div class="complete-actions">
+                    <button class="btn-primary" id="sentence-retry-forgotten-btn">
+                        🔄 再复习一遍忘记的
+                    </button>
+                    <button class="btn-secondary" id="sentence-back-from-complete-btn">
+                        🏠 返回长句本
+                    </button>
+                </div>
             </div>
 
         </section>
