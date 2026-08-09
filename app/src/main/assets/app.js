@@ -160,6 +160,19 @@ class WordbookApp {
         this.currentWordIndex = 0;
         this.shuffledWords = [];
 
+        // 句子结构类型 → 中文标签
+        this.TYPE_LABELS = {
+            'main': '主句',
+            'that-object': 'that宾语从句',
+            'embedded-object': '嵌套宾语从句',
+            'which-relative': '定语从句',
+            'concessive': '让步状语',
+            'conditional': '条件状语',
+            'inf-purpose': '不定式目的状语',
+            'cleft': '强调句',
+            'other-clause': '其他从句/短语'
+        };
+
         this.init();
     }
 
@@ -172,6 +185,7 @@ class WordbookApp {
         this.updateSelectedCount();
         this.setupNavigation();
         this.setupPopStateListener();
+        this.setupSegmentClick();
         // 设置初始历史状态，否则二级页面返回时 event.state 为 null 会导致直接退出
         history.replaceState({ page: 'articles' }, '', '');
     }
@@ -706,76 +720,112 @@ class WordbookApp {
     async saveArticle() {
         const title = this.articleTitleInput.value.trim();
         const content = this.stripHtml(this.articleInput.value.trim());
-        
+
         if (!title) {
             alert('请输入文章标题');
             return;
         }
-        
+
         if (!content) {
             alert('请输入文章内容');
             return;
         }
 
         const wordsToAdd = Array.from(this.selectedWords);
-        
+
         if (wordsToAdd.length === 0) {
             alert('请选择要添加的单词');
             return;
         }
 
-        // 显示加载提示
-        this.saveArticleBtn.textContent = '正在保存...';
+        const sentenceCount = this.selectedSentences.length;
+        const totalTasks = sentenceCount + 1; // 单词翻译 + 长句数量
+        this.saveArticleBtn.textContent = `正在翻译 (0/${totalTasks})...`;
         this.saveArticleBtn.disabled = true;
 
         try {
-            // 尝试新方法：一次调用完成单词翻译+句子定位+句子翻译
-            let translations;
-            try {
-                translations = await translator.translateWordsWithSentences(
-                    this.articleInput.value, wordsToAdd
-                );
-            } catch (error) {
+            // === 并行：单词翻译 + 所有长句分析同时进行 ===
+
+            // 追踪完成进度
+            let completedTasks = 0;
+            const updateProgress = () => {
+                completedTasks++;
+                this.saveArticleBtn.textContent = `正在翻译 (${completedTasks}/${totalTasks})...`;
+            };
+
+            // 1. 启动单词翻译任务
+            const wordPromise = translator.translateWordsWithSentences(
+                this.articleInput.value, wordsToAdd
+            ).catch(async (error) => {
                 console.warn('句子提取翻译失败，回退到仅翻译单词:', error.message);
-                translations = await translator.translateBatch(wordsToAdd);
-                translations = translations.map(t => ({ ...t, sentence: '', sentenceTranslation: '' }));
+                const results = await translator.translateBatch(wordsToAdd);
+                return results.map(t => ({ ...t, sentence: '', sentenceTranslation: '' }));
+            }).finally(() => {
+                updateProgress();
+            });
+
+            // 2. 启动所有长句分析任务（并行执行）
+            let sentencePromise = Promise.resolve([]);
+            if (sentenceCount > 0) {
+                const sentenceTasks = this.selectedSentences.map((sent, index) => {
+                    const sentenceText = this.processedWords
+                        .slice(sent.startId, sent.endId + 1)
+                        .map(t => t.text)
+                        .join('');
+                    return translator.analyzeSentence(sentenceText)
+                        .then(analysis => ({
+                            index,
+                            sentenceText,
+                            analysis,
+                            success: true
+                        }))
+                        .catch(err => {
+                            console.warn('句子分析失败:', sentenceText.substring(0, 50), err.message);
+                            return { index, sentenceText, analysis: null, success: false };
+                        })
+                        .finally(() => {
+                            updateProgress();
+                        });
+                });
+                sentencePromise = Promise.all(sentenceTasks);
             }
+
+            // 3. 等待单词翻译和长句分析全部完成
+            const [translations, sentenceResults] = await Promise.all([
+                wordPromise,
+                sentencePromise
+            ]);
+
+            this.saveArticleBtn.textContent = '正在保存数据...';
+
+            // === 处理结果 ===
 
             // 添加到单词本
             translations.forEach(({ word, meaning, sentence, sentenceTranslation }) => {
                 this.addWordToWordbook(word, meaning, sentence, sentenceTranslation);
             });
 
-            // 处理选中的长句
-            let sentenceCount = 0;
-            if (this.selectedSentences.length > 0) {
-                for (const sent of this.selectedSentences) {
-                    try {
-                        const sentenceText = this.processedWords
-                            .slice(sent.startId, sent.endId + 1)
-                            .map(t => t.text)
-                            .join('');
-                        const analysis = await translator.analyzeSentence(sentenceText);
-                        const entry = {
-                            id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5),
-                            sentence: sentenceText,
-                            translation: analysis.translation,
-                            segments: analysis.segments,
-                            breakdown: analysis.breakdown,
-                            source: title,
-                            addedAt: new Date().toISOString()
-                        };
-                        FSRS.initCard(entry);
-                        this.sentencebook.push(entry);
-                        sentenceCount++;
-                    } catch (err) {
-                        console.warn('句子分析失败:', sentenceText.substring(0, 50), err.message);
-                    }
+            // 处理长句结果
+            let savedSentenceCount = 0;
+            for (const result of sentenceResults) {
+                if (result.success && result.analysis) {
+                    const entry = {
+                        id: Date.now().toString() + '_' + result.index + '_' + Math.random().toString(36).substr(2, 5),
+                        sentence: result.sentenceText,
+                        translation: result.analysis.translation,
+                        segments: result.analysis.segments,
+                        breakdown: result.analysis.breakdown,
+                        source: title,
+                        addedAt: new Date().toISOString()
+                    };
+                    FSRS.initCard(entry);
+                    this.sentencebook.push(entry);
+                    savedSentenceCount++;
                 }
-                if (sentenceCount > 0) {
-                    this.saveSentences();
-                    this.renderSentences();
-                }
+            }
+            if (savedSentenceCount > 0) {
+                this.saveSentences();
+                this.renderSentences();
             }
 
             // 保存文章
@@ -801,8 +851,8 @@ class WordbookApp {
             this.renderWordbook();
 
             var msg = `成功保存文章和 ${translations.length} 个单词`;
-            if (sentenceCount > 0) {
-                msg += `，${sentenceCount} 条长句`;
+            if (savedSentenceCount > 0) {
+                msg += `，${savedSentenceCount} 条长句`;
             }
             alert(msg + '！');
         } catch (error) {
@@ -2339,6 +2389,7 @@ class WordbookApp {
         this.sentenceDetailColored.innerHTML = item.segments && item.segments.length > 0
             ? this.renderSegmentsToHtml(item.segments)
             : '<p style="color:#999;">暂无结构分析</p>';
+        this.renderSentenceLegend(item.segments, 'sentence-detail-legend');
         this.sentenceDetailBreakdown.innerHTML = this.renderBreakdownToHtml(item.breakdown || '暂无拆解');
         this.sentenceDetailTree.innerHTML = this.renderTreeFromBreakdown(item.breakdown || '');
         this.sentenceDetailTranslation.textContent = item.translation || '暂无翻译';
@@ -2358,13 +2409,66 @@ class WordbookApp {
     // 将 segments 数组渲染为彩色标注 HTML
     renderSegmentsToHtml(segments) {
         if (!segments || segments.length === 0) return '';
+        var self = this;
         return '<div style="white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;word-break:normal;">' +
             segments.map(seg => {
-                const typeClass = seg.type ? `type-${seg.type}` : '';
-                const title = this.escapeHtml(seg.role ? `${seg.type} — ${seg.role}` : (seg.type || ''));
-                return `<span class="sentence-segment ${typeClass}" title="${title}">${this.escapeHtml(seg.text)}</span>`;
+                var typeClass = seg.type ? 'type-' + seg.type : '';
+                var label = self.TYPE_LABELS[seg.type] || seg.type || '';
+                var role = seg.role || '';
+                var tooltip = role ? label + ' - ' + role : label;
+                return '<span class="sentence-segment ' + typeClass + '" data-seg-type="' + (seg.type || '') + '" data-seg-role="' + role + '" data-seg-tip="' + self.escapeHtml(tooltip) + '">' + self.escapeHtml(seg.text) + '</span>';
             }).join(' ') +
             '</div>';
+    }
+
+    // 根据 segments 中出现的类型渲染颜色图例
+    renderSentenceLegend(segments, containerId) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        if (!segments || segments.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        var self = this;
+        var types = [];
+        var seen = {};
+        segments.forEach(function(s) {
+            if (s.type && !seen[s.type]) {
+                seen[s.type] = true;
+                types.push(s.type);
+            }
+        });
+        if (types.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        container.innerHTML = types.map(function(type) {
+            return '<span class="sentence-legend-item"><span class="sentence-legend-swatch sw-' + type + '"></span>' + (self.TYPE_LABELS[type] || type) + '</span>';
+        }).join('');
+    }
+
+    // 全局委托：点击句子片段弹出类型/角色提示（兼容移动端无 hover）
+    setupSegmentClick() {
+        if (this._segmentClickSetup) return;
+        this._segmentClickSetup = true;
+        var self = this;
+        document.addEventListener('click', function(e) {
+            var seg = e.target.closest('.sentence-segment');
+            if (!seg) return;
+            // 清除旧弹窗
+            var existing = document.querySelector('.sentence-segment-popup');
+            if (existing) existing.remove();
+            var tip = seg.getAttribute('data-seg-tip');
+            if (!tip) return;
+            var popup = document.createElement('div');
+            popup.className = 'sentence-segment-popup';
+            popup.textContent = tip;
+            var rect = seg.getBoundingClientRect();
+            popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
+            popup.style.top = (rect.bottom + 4) + 'px';
+            document.body.appendChild(popup);
+            setTimeout(function() { if (popup.parentNode) popup.remove(); }, 2200);
+        });
     }
 
     // 将 breakdown 文本渲染为 HTML（保留换行和 emoji，去掉树状图部分）
@@ -2577,6 +2681,7 @@ class WordbookApp {
         this.sentenceReviewColored.innerHTML = currentItem.segments && currentItem.segments.length > 0
             ? this.renderSegmentsToHtml(currentItem.segments)
             : '';
+        this.renderSentenceLegend(currentItem.segments, 'sentence-review-legend');
         this.sentenceReviewBreakdown.innerHTML = this.renderBreakdownToHtml(currentItem.breakdown || '');
         this.sentenceReviewTree.innerHTML = this.renderTreeFromBreakdown(currentItem.breakdown || '');
 
@@ -2775,27 +2880,38 @@ class WordbookApp {
     // 去除HTML标签，还原纯文本
     stripHtml(text) {
         if (!text) return '';
-        // 先用DOMParser（标准方式），失败则回退到正则
-        try {
-            if (typeof DOMParser !== 'undefined') {
-                const doc = new DOMParser().parseFromString(text, 'text/html');
-                return doc.body.textContent || '';
-            }
-        } catch (e) {}
-        // 正则回退：移除所有HTML标签、注释、脚本/样式内容
+        // 只有文本确实包含 HTML 标签时才用 DOMParser 解析
+        // 避免将纯文本中的 < > 误解析为 HTML 标签导致中文丢失
+        if (/<[a-zA-Z][^>]*>/.test(text)) {
+            try {
+                if (typeof DOMParser !== 'undefined') {
+                    const doc = new DOMParser().parseFromString(text, 'text/html');
+                    var result = doc.body.textContent || '';
+                    if (result && result.trim().length > 0) {
+                        return result;
+                    }
+                }
+            } catch (e) {}
+            // DOMParser 失败时的正则回退：只移除明确的 HTML 标签
+            return text
+                .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                .replace(/<!--[\s\S]*?-->/g, '')
+                .replace(/<[a-zA-Z][^>]*>/g, '')       // 只移除以字母开头的标签
+                .replace(/<\/[a-zA-Z][^>]*>/g, '');     // 只移除以字母开头的闭合标签
+        }
+        // 纯文本：只解码 HTML 实体，不做任何 HTML 解析
         return text
-            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-            .replace(/<!--[\s\S]*?-->/g, '')
-            .replace(/<[^>]*>/g, '')
-            // 清理孤立的HTML片段（标签名已丢失但属性/闭合标签残留）
-            .replace(/<\/\w+>/gi, '')           // </span>, </div> 等闭合标签
-            .replace(/\s+\w+(?:-\w+)*="[^"]*">/gi, '')  // class="..." >, id="..." > 孤立属性
             .replace(/&lt;/g, '<')
             .replace(/&gt;/g, '>')
             .replace(/&amp;/g, '&')
             .replace(/&quot;/g, '"')
-            .replace(/&#?\w+;/g, '');
+            .replace(/&#x([0-9a-fA-F]+);/g, function(_, hex) {
+                return String.fromCharCode(parseInt(hex, 16));
+            })
+            .replace(/&#(\d+);/g, function(_, dec) {
+                return String.fromCharCode(parseInt(dec, 10));
+            });
     }
 
     // HTML 转义

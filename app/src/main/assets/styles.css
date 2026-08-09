@@ -6,9 +6,9 @@
 }
 
 :root {
-    --primary-color: #4CAF50;
-    --primary-light: #81C784;
-    --primary-dark: #388E3C;
+    --primary-color: oklch(74.6% 0.16 232.661);
+    --primary-light: oklch(90% 0.08 232);
+    --primary-dark: oklch(55% 0.18 252);
     --secondary-color: #757575;
     --accent-color: #2196F3;
     --accent-light: #64B5F6;
@@ -927,9 +927,9 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .word.selected {
-    color: #166534;
+    color: oklch(38% 0.16 252);
     font-weight: 700;
-    background-color: #bbf7d0;         /* 浅绿色背景，已选中 */
+    background-color: oklch(92% 0.06 232);         /* 蓝色背景，已选中 */
     padding: 1px 2px;
     border-radius: 3px;
     box-shadow: none;
@@ -937,7 +937,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* 第一下点击 — 绿色文字标记（待确认） */
 .word.marked {
-    color: #16a34a;
+    color: oklch(60% 0.18 240);
     font-weight: 600;
     background: none;
 }
@@ -957,7 +957,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 .sentence-color-0 { border-bottom: 3px solid #f59e0b; }  /* orange */
 .sentence-color-1 { border-bottom: 3px solid #a855f7; }  /* purple */
 .sentence-color-2 { border-bottom: 3px solid #3b82f6; }  /* blue */
-.sentence-color-3 { border-bottom: 3px solid #22c55e; }  /* green */
+.sentence-color-3 { border-bottom: 3px solid oklch(74.6% 0.16 232.661); }  /* blue */
 .sentence-color-4 { border-bottom: 3px solid #ef4444; }  /* red */
 
 /* 提示和计数 */
@@ -1729,17 +1729,17 @@ input[type="text"]:focus, input[type="password"]:focus {
     background-color: #ffcc80;
 }
 
-/* 正常 — 绿色 */
+/* 正常 — 蓝色 */
 .rating-good {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
+    background-color: oklch(96% 0.015 232);
+    color: oklch(38% 0.16 252);
+    border: 1px solid oklch(74.6% 0.16 232.661);
 }
 .rating-good:hover {
-    background-color: #c8e6c9;
+    background-color: oklch(90% 0.06 232);
 }
 .rating-good:active {
-    background-color: #a5d6a7;
+    background-color: oklch(80% 0.12 232);
 }
 
 /* 复习页面 — 原句与翻译区域 */
@@ -1778,7 +1778,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .review-sentence-translation {
     color: var(--text-secondary, #666);
-    border-left-color: #a5d6a7;
+    border-left-color: oklch(74.6% 0.16 232.661);
 }
 
 /* 句子中目标单词/释义的高亮 */
@@ -1882,7 +1882,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .highlighted-word {
-    background-color: #4CAF50;
+    background-color: oklch(74.6% 0.16 232.661);
     color: white;
     padding: 2px 6px;
     border-radius: 4px;
@@ -2178,7 +2178,16 @@ input[type="text"]:focus, input[type="password"]:focus {
     line-height: 1.8 !important;
 }
 
-/* 句子结构颜色体系 */
+/* ========== 句子结构颜色体系 ========== */
+/*
+  9 种语法类型按功能分 5 组:
+  主干: main
+  名词性: that-object / embedded-object (同色系, 深浅表嵌套)
+  形容词性: which-relative
+  副词性: concessive / conditional / inf-purpose
+  特殊/兜底: cleft / other-clause
+*/
+
 .sentence-segment {
     padding: 1px 3px;
     border-radius: 3px;
@@ -2186,14 +2195,78 @@ input[type="text"]:focus, input[type="password"]:focus {
     font-weight: 500;
     word-break: normal;
     overflow-wrap: break-word;
+    cursor: pointer;
 }
 
+/* ---- 主干结构 (Blue) ---- */
 .sentence-segment.type-main { background: #eff6ff; color: #1e40af; border-bottom: 2px solid #3b82f6; }
-.sentence-segment.type-that-object { background: #f0fdf4; color: #166534; border-bottom: 2px solid #22c55e; }
-.sentence-segment.type-which-relative { background: #fffbeb; color: #92400e; border-bottom: 2px solid #f59e0b; }
-.sentence-segment.type-concessive { background: #faf5ff; color: #6b21a8; border-bottom: 2px solid #a855f7; }
-.sentence-segment.type-embedded-object { background: #fef2f2; color: #991b1b; border-bottom: 2px solid #ef4444; }
-.sentence-segment.type-inf-purpose { background: #f0f9ff; color: #0e7490; border-bottom: 2px solid #06b6d4; }
+
+/* ---- 名词性从句: 蓝色系, 嵌套加深 ---- */
+.sentence-segment.type-that-object     { background: oklch(96% 0.015 232); color: oklch(38% 0.16 252); border-bottom: 2px solid oklch(74.6% 0.16 232.661); }
+.sentence-segment.type-embedded-object { background: oklch(94% 0.025 228); color: oklch(32% 0.17 248); border-bottom: 2px solid oklch(74.6% 0.16 232.661); }
+
+/* ---- 形容词性从句 (Orange) ---- */
+.sentence-segment.type-which-relative { background: #fef7ed; color: #9a3412; border-bottom: 2px solid #f97316; }
+
+/* ---- 副词性从句: 同属冷色, 各不同相 ---- */
+.sentence-segment.type-concessive  { background: #f5f3ff; color: #5b21b6; border-bottom: 2px solid #8b5cf6; }  /* Violet */
+.sentence-segment.type-conditional { background: #fff1f2; color: #9f1239; border-bottom: 2px solid #f43f5e; }  /* Rose   */
+.sentence-segment.type-inf-purpose { background: #f0f9ff; color: #075985; border-bottom: 2px solid #38bdf8; }  /* Sky    */
+
+/* ---- 特殊结构 (Pink) ---- */
+.sentence-segment.type-cleft { background: #fdf2f8; color: #9d174d; border-bottom: 2px solid #ec4899; }
+
+/* ---- 兜底 (Warm Gray) ---- */
+.sentence-segment.type-other-clause { background: #fafaf9; color: #44403c; border-bottom: 2px solid #a8a29e; }
+
+/* ---- 颜色图例 ---- */
+.sentence-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 10px;
+    padding: 8px 0;
+}
+.sentence-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #666;
+}
+.sentence-legend-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.sentence-legend-swatch.sw-main             { background: #eff6ff; border-bottom: 2px solid #3b82f6; }
+.sentence-legend-swatch.sw-that-object      { background: oklch(96% 0.015 232); border-bottom: 2px solid oklch(74.6% 0.16 232.661); }
+.sentence-legend-swatch.sw-embedded-object  { background: oklch(94% 0.025 228); border-bottom: 2px solid oklch(74.6% 0.16 232.661); }
+.sentence-legend-swatch.sw-which-relative   { background: #fef7ed; border-bottom: 2px solid #f97316; }
+.sentence-legend-swatch.sw-concessive       { background: #f5f3ff; border-bottom: 2px solid #8b5cf6; }
+.sentence-legend-swatch.sw-conditional      { background: #fff1f2; border-bottom: 2px solid #f43f5e; }
+.sentence-legend-swatch.sw-inf-purpose      { background: #f0f9ff; border-bottom: 2px solid #38bdf8; }
+.sentence-legend-swatch.sw-cleft            { background: #fdf2f8; border-bottom: 2px solid #ec4899; }
+.sentence-legend-swatch.sw-other-clause     { background: #fafaf9; border-bottom: 2px solid #a8a29e; }
+
+/* 移动端: 点击句子片段弹出类型/角色提示 */
+.sentence-segment-popup {
+    position: fixed;
+    z-index: 10000;
+    background: rgba(0,0,0,0.82);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    pointer-events: none;
+    animation: segmentPopupIn 0.15s ease-out;
+}
+@keyframes segmentPopupIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
 /* 退出提示 toast */
 .exit-toast {
@@ -2215,7 +2288,6 @@ input[type="text"]:focus, input[type="password"]:focus {
     from { opacity: 0; transform: translateX(-50%) translateY(20px); }
     to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
-.sentence-segment.type-other-clause { background: #f5f5f5; color: #444; border-bottom: 2px solid #999; }
 
 /* ========== 复习完成面板 ========== */
 
@@ -2284,7 +2356,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .stat-good {
-    background: #e8f5e9;
+    background: oklch(96% 0.015 232);
 }
 
 .stat-hard {
@@ -2301,7 +2373,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     line-height: 1;
 }
 
-.stat-good .stat-num { color: #2e7d32; }
+.stat-good .stat-num { color: oklch(38% 0.16 252); }
 .stat-hard .stat-num { color: #e65100; }
 .stat-again .stat-num { color: #c62828; }
 

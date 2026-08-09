@@ -4,7 +4,15 @@
       "Read(//c/Users/jpc79/**)",
       "Read(//c/Users/jpc79/AppData/Roaming/Google/**)",
       "Bash(keytool -list -keystore wordbook-release.keystore -storepass android123)",
-      "Bash(./gradlew assembleRelease)"
+      "Bash(./gradlew assembleRelease)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git stash *)",
+      "Bash(ls \"C:/Users/jpc79/Documents/obsidian/计算机/wordbook/\" 2>/dev/null || echo \"DIR_NOT_FOUND\")",
+      "Read(//c/Users/jpc79/Documents/obsidian/计算机/wordbook/**)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\jpc79\\Documents\\obsidian\\计算机\\wordbook"
     ]
   }
 }

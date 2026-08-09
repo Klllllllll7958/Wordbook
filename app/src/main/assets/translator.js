@@ -437,21 +437,21 @@ The same dramatic technological changes that have provided marketers with more c
         }
     }
 
-    // 批量翻译
+    // 批量翻译（并行请求，大幅提升速度）
     async translateBatch(words) {
-        const results = [];
-        for (const word of words) {
-            try {
-                const result = await this.translate(word);
-                results.push(result);
-            } catch (error) {
-                results.push({
-                    word: word,
-                    meaning: '翻译失败',
-                    source: 'error'
-                });
-            }
-        }
+        const results = await Promise.all(
+            words.map(async (word) => {
+                try {
+                    return await this.translate(word);
+                } catch (error) {
+                    return {
+                        word: word,
+                        meaning: '翻译失败',
+                        source: 'error'
+                    };
+                }
+            })
+        );
         return results;
     }
 }
