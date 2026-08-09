@@ -15,6 +15,10 @@ class WordbookApp {
         this.isShowingMeaning = false;
         this.processedWords = [];
 
+        // 选词/划线交互状态
+        this.interactionState = null;
+        this.markedWord = null;  // 第一下点击标记的单词（未选中，只是绿色提示）
+
         // 复习页面状态
         this.reviewWords = [];
         this.currentReviewIndex = 0;
@@ -518,10 +522,12 @@ class WordbookApp {
         }));
     }
 
-    // 渲染单词（支持点按选单词 + 长按拖选句子）
+    // 渲染单词（长按选词200ms + 移动/长按500ms划线）
     renderWords() {
         var self = this;
         this.wordDisplay.innerHTML = '';
+        this.interactionState = null;
+        this.markedWord = null;
 
         this.processedWords.forEach(item => {
             const span = document.createElement('span');
@@ -537,87 +543,131 @@ class WordbookApp {
                 span.className = 'token';
             }
 
-            // 短按（<500ms）选单词
-            var pressTimer;
-            var pressStartTime;
-            var touchJustEnded = false;  // 防止移动端 touch → 合成 mouse 事件导致双击发
+            // mousedown / touchstart — 统一记录交互起点
+            function onDown(e, pos) {
+                // 清理上一次未正常结束的交互
+                if (self.interactionState) {
+                    clearTimeout(self.interactionState.drawTimer);
+                }
+                self.interactionState = {
+                    tokenId: parseInt(span.dataset.id),
+                    isWord: item.isWord,
+                    startTime: Date.now(),
+                    startX: pos.clientX,
+                    startY: pos.clientY,
+                    drawTimer: null,
+                    moved: false
+                };
+                var state = self.interactionState;
+
+                // 500ms 计时器 → 进入划线模式
+                state.drawTimer = setTimeout(function() {
+                    state.moved = true;
+                    self.startSentenceDraw(state.tokenId);
+                }, 500);
+            }
 
             span.addEventListener('mousedown', function(e) {
-                if (touchJustEnded) return;
-                pressStartTime = Date.now();
-                pressTimer = setTimeout(function() {
-                    // 长按触发 → 开始划线
-                    self.startSentenceDraw(parseInt(span.dataset.id));
-                }, 500);
+                // 防止 touch 后的合成 mouse 事件二次触发
+                if (self._touchJustEnded && Date.now() - self._touchJustEnded < 400) return;
+                e.preventDefault();
+                onDown(e, { clientX: e.clientX, clientY: e.clientY });
             });
 
-            span.addEventListener('mouseup', function(e) {
-                if (touchJustEnded) return;
-                clearTimeout(pressTimer);
-                if (self.isDrawingSentence) {
-                    self.endSentenceDraw();
-                } else if (Date.now() - pressStartTime < 500) {
-                    // 短按 → 选单词
-                    self.toggleWordSelection(span, item.text);
-                }
-            });
-
-            span.addEventListener('mouseleave', function() {
-                clearTimeout(pressTimer);
-            });
-
-            // 触摸事件
             span.addEventListener('touchstart', function(e) {
-                touchJustEnded = false;
-                pressStartTime = Date.now();
-                pressTimer = setTimeout(function() {
-                    self.startSentenceDraw(parseInt(span.dataset.id));
-                }, 500);
+                onDown(e, { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
             }, { passive: true });
-
-            span.addEventListener('touchend', function(e) {
-                clearTimeout(pressTimer);
-                touchJustEnded = true;
-                setTimeout(function() { touchJustEnded = false; }, 500);
-                if (self.isDrawingSentence) {
-                    self.endSentenceDraw();
-                } else if (Date.now() - pressStartTime < 500) {
-                    self.toggleWordSelection(span, item.text);
-                }
-            });
-
-            span.addEventListener('touchcancel', function() {
-                clearTimeout(pressTimer);
-                touchJustEnded = true;
-                setTimeout(function() { touchJustEnded = false; }, 500);
-            });
 
             this.wordDisplay.appendChild(span);
         });
 
-        // 全局移动事件 — 划线时跟踪手指/鼠标
-        this.wordDisplay.onmousemove = function(e) {
-            if (self.isDrawingSentence) {
-                self.updateSentenceDraw(e);
+        // ---- 容器级事件 ----
+
+        function getPos(e) {
+            if (e.touches) return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+            if (e.changedTouches) return { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY };
+            return { clientX: e.clientX, clientY: e.clientY };
+        }
+
+        // 清除所有标记状态
+        function clearMarkedWord() {
+            self.markedWord = null;
+            var markedSpans = self.wordDisplay.querySelectorAll('.word.marked');
+            for (var i = 0; i < markedSpans.length; i++) {
+                markedSpans[i].classList.remove('marked');
             }
+        }
+
+        function onMove(e) {
+            if (!self.interactionState) return;
+            if (self.isDrawingSentence) {
+                self.updateSentenceDraw(getPos(e));
+            }
+        }
+
+        function onUp(e) {
+            if (!self.interactionState) return;
+            var state = self.interactionState;
+
+            clearTimeout(state.drawTimer);
+
+            var span = self.wordDisplay.querySelector('[data-id="' + state.tokenId + '"]');
+
+            if (self.isDrawingSentence) {
+                self.endSentenceDraw();
+            } else if (state.isWord && !state.moved && span) {
+                // 三步点击：标记 → 选中 → 取消
+                var word = span.dataset.word;
+                if (self.selectedWords.has(word)) {
+                    // 已选中 → 取消选中
+                    self.toggleWordSelection(span, word);
+                    // 同时清除标记状态
+                    if (self.markedWord === word) {
+                        clearMarkedWord();
+                    }
+                } else if (self.markedWord === word) {
+                    // 已标记（绿色文字）→ 确认选中（绿色背景）
+                    clearMarkedWord();
+                    self.toggleWordSelection(span, word);
+                } else {
+                    // 未标记未选中 → 标记为绿色
+                    clearMarkedWord();
+                    self.markedWord = word;
+                    span.classList.add('marked');
+                }
+            }
+
+            self.interactionState = null;
+        }
+
+        this.wordDisplay.onmousemove = function(e) {
+            if (self._touchJustEnded && Date.now() - self._touchJustEnded < 400) return;
+            onMove(e);
+        };
+        this.wordDisplay.onmouseup = function(e) {
+            if (self._touchJustEnded && Date.now() - self._touchJustEnded < 400) return;
+            onUp(e);
         };
         this.wordDisplay.ontouchmove = function(e) {
-            if (self.isDrawingSentence) {
-                self.updateSentenceDraw(e.touches[0]);
-                e.preventDefault();
-            }
+            onMove(e);
+            if (self.interactionState && self.isDrawingSentence) e.preventDefault();
+        };
+        this.wordDisplay.ontouchend = function(e) {
+            self._touchJustEnded = Date.now();
+            onUp(e);
         };
 
-        // 全局松开事件 — 划线时在 wordDisplay 区域外松手也能正常结束
+        // 全局松手 — 划线时手指滑出 wordDisplay 也能结束
         if (!this._globalDrawEndHandlersSet) {
             this._globalDrawEndHandlersSet = true;
             document.addEventListener('mouseup', function(e) {
-                if (self.isDrawingSentence) self.endSentenceDraw();
+                if (self._onContainerUp) self._onContainerUp(e);
             });
             document.addEventListener('touchend', function(e) {
-                if (self.isDrawingSentence) self.endSentenceDraw();
+                if (self._onContainerUp) self._onContainerUp(e);
             });
         }
+        this._onContainerUp = onUp;
 
         // 恢复已保存的长句颜色
         this.renderSentenceUnderlines();
@@ -655,7 +705,7 @@ class WordbookApp {
     // 保存文章和单词
     async saveArticle() {
         const title = this.articleTitleInput.value.trim();
-        const content = this.articleInput.value.trim();
+        const content = this.stripHtml(this.articleInput.value.trim());
         
         if (!title) {
             alert('请输入文章标题');
@@ -1194,7 +1244,21 @@ class WordbookApp {
     loadArticles() {
         try {
             const saved = localStorage.getItem('articles');
-            return saved ? JSON.parse(saved) : [];
+            const articles = saved ? JSON.parse(saved) : [];
+            // 兼容修复：清除旧数据中可能混入的HTML标签
+            let cleaned = false;
+            articles.forEach(article => {
+                // 检测HTML标签、实体编码、以及孤立的HTML属性/闭合标签碎片
+                if (article.content && /<[^>]*>|<\/\w+>|\s+\w+(?:-\w+)*="[^"]*">|&lt;|&gt;|&#?\w+;/.test(article.content)) {
+                    article.content = this.stripHtml(article.content);
+                    cleaned = true;
+                }
+            });
+            if (cleaned) {
+                this.articles = articles;
+                this.saveArticles();
+            }
+            return articles;
         } catch (error) {
             console.error('加载文章失败:', error);
             return [];
@@ -1549,6 +1613,8 @@ class WordbookApp {
     // sentences: 该文章关联的长句数组（从sentencebook中筛选）
     highlightContent(content, words, sentences) {
         if (!content) return '';
+        // 先清除可能混入的HTML标签，确保显示干净的原文
+        content = this.stripHtml(content);
 
         // 按长度降序排序（长句和单词都要从长到短处理，避免短文本误匹配长文本）
         var sortedSentences = (sentences || []).slice().sort(function(a, b) {
@@ -2704,6 +2770,32 @@ class WordbookApp {
         } catch (e) {
             return 'error';
         }
+    }
+
+    // 去除HTML标签，还原纯文本
+    stripHtml(text) {
+        if (!text) return '';
+        // 先用DOMParser（标准方式），失败则回退到正则
+        try {
+            if (typeof DOMParser !== 'undefined') {
+                const doc = new DOMParser().parseFromString(text, 'text/html');
+                return doc.body.textContent || '';
+            }
+        } catch (e) {}
+        // 正则回退：移除所有HTML标签、注释、脚本/样式内容
+        return text
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<!--[\s\S]*?-->/g, '')
+            .replace(/<[^>]*>/g, '')
+            // 清理孤立的HTML片段（标签名已丢失但属性/闭合标签残留）
+            .replace(/<\/\w+>/gi, '')           // </span>, </div> 等闭合标签
+            .replace(/\s+\w+(?:-\w+)*="[^"]*">/gi, '')  // class="..." >, id="..." > 孤立属性
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#?\w+;/g, '');
     }
 
     // HTML 转义

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/jpc79/**)",
+      "Read(//c/Users/jpc79/AppData/Roaming/Google/**)",
+      "Bash(keytool -list -keystore wordbook-release.keystore -storepass android123)",
+      "Bash(./gradlew assembleRelease)"
+    ]
+  }
+}

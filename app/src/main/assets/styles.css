@@ -905,6 +905,8 @@ input[type="text"]:focus, input[type="password"]:focus {
     line-height: 2.2;
     margin-bottom: 20px;
     font-size: 15px;
+    white-space: pre-wrap;       /* 保留段落换行和缩进 */
+    word-wrap: break-word;
 }
 
 .word {
@@ -915,9 +917,9 @@ input[type="text"]:focus, input[type="password"]:focus {
     font-size: 15px;
     background-color: transparent;
     border: none;
-    padding: 0;
-    margin: 0;
-    border-radius: 0;
+    padding: 1px 2px;
+    margin: 0 1px;
+    border-radius: 3px;
 }
 
 .word:hover {
@@ -925,12 +927,19 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .word.selected {
-    color: var(--primary-color);
+    color: #166534;
     font-weight: 700;
-    background: none;
-    padding: 0;
-    border-radius: 0;
+    background-color: #bbf7d0;         /* 浅绿色背景，已选中 */
+    padding: 1px 2px;
+    border-radius: 3px;
     box-shadow: none;
+}
+
+/* 第一下点击 — 绿色文字标记（待确认） */
+.word.marked {
+    color: #16a34a;
+    font-weight: 600;
+    background: none;
 }
 
 /* 非单词 token */
