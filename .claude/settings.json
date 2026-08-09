@@ -9,7 +9,17 @@
       "Bash(git merge *)",
       "Bash(git stash *)",
       "Bash(ls \"C:/Users/jpc79/Documents/obsidian/计算机/wordbook/\" 2>/dev/null || echo \"DIR_NOT_FOUND\")",
-      "Read(//c/Users/jpc79/Documents/obsidian/计算机/wordbook/**)"
+      "Read(//c/Users/jpc79/Documents/obsidian/计算机/wordbook/**)",
+      "WebSearch",
+      "Bash(ls ~/.claude/skills/ 2>/dev/null; echo \"---\"; ls .claude/skills/ 2>/dev/null)",
+      "Read(//c/Users/jpc79/.claude/skills/**)",
+      "Bash(npx --version)",
+      "WebFetch(domain:phosphoricons.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "Bash(npm pack *)",
+      "Bash(mkdir -p c:/Users/jpc79/AndroidStudioProjects/Wordbook/tmp_icons)",
+      "Bash(tar -xzf phosphor-icons-core-2.1.1.tgz)"
     ],
     "additionalDirectories": [
       "C:\\Users\\jpc79\\Documents\\obsidian\\计算机\\wordbook"

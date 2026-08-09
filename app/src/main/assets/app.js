@@ -1355,9 +1355,9 @@ class WordbookApp {
         }
 
         if (apiKey) {
-            this.updateApiStatus('success', '✓ DeepSeek API已配置，可以使用AI智能翻译功能');
+            this.updateApiStatus('success', Icon.svg('check-circle-fill',16) + ' DeepSeek API已配置，可以使用AI智能翻译功能');
         } else {
-            this.updateApiStatus('info', 'ℹ 请配置DeepSeek API密钥以使用翻译功能');
+            this.updateApiStatus('info', Icon.svg('lightbulb',16) + ' 请配置DeepSeek API密钥以使用翻译功能');
         }
     }
 
@@ -1366,7 +1366,7 @@ class WordbookApp {
         const apiKey = this.apiKeyInput.value.trim();
 
         if (!apiKey) {
-            this.updateApiStatus('error', '✗ 请输入API Key');
+            this.updateApiStatus('error', Icon.svg('x-circle-fill',16) + ' 请输入API Key');
             this.apiKeyInput.focus();
             return;
         }
@@ -1387,7 +1387,7 @@ class WordbookApp {
 
             // 无论验证结果如何，都保存配置
             localStorage.setItem('deepseekApiKey', apiKey);
-            this.updateApiStatus('success', '✓ API密钥保存成功！');
+            this.updateApiStatus('success', Icon.svg('check-circle-fill',16) + ' API密钥保存成功！');
 
             // 通知translator模块更新配置
             if (window.translator) {
@@ -1397,7 +1397,7 @@ class WordbookApp {
             console.error('保存API配置失败:', error);
             // 即使发生错误，也保存配置
             localStorage.setItem('deepseekApiKey', apiKey);
-            this.updateApiStatus('success', '✓ API密钥保存成功！');
+            this.updateApiStatus('success', Icon.svg('check-circle-fill',16) + ' API密钥保存成功！');
 
             // 通知translator模块更新配置
             if (window.translator) {
@@ -1468,7 +1468,7 @@ class WordbookApp {
 
             this.apiKeyInput.value = '';
 
-            this.updateApiStatus('info', 'ℹ API配置已清除，请重新配置以使用翻译功能');
+            this.updateApiStatus('info', Icon.svg('lightbulb',16) + ' API配置已清除，请重新配置以使用翻译功能');
 
             // 通知translator模块清除配置
             if (window.translator) {
@@ -1476,13 +1476,13 @@ class WordbookApp {
             }
         } catch (error) {
             console.error('清除API配置失败:', error);
-            this.updateApiStatus('error', '✗ 清除失败，请重试');
+            this.updateApiStatus('error', Icon.svg('x-circle-fill',16) + ' 清除失败，请重试');
         }
     }
 
     // 更新API状态显示
     updateApiStatus(type, message) {
-        this.apiStatus.textContent = message;
+        this.apiStatus.innerHTML = message;
         this.apiStatus.className = 'api-status ' + type;
         
         // 根据状态类型添加动画效果
@@ -1644,8 +1644,8 @@ class WordbookApp {
                 if (existingStats) existingStats.remove();
                 var statsRow = document.createElement('div');
                 statsRow.className = 'article-stats-row';
-                statsRow.innerHTML = '<span class="article-stat-word">📚 ' + this.currentArticle.words.length + ' 个单词</span>' +
-                    (articleSentences.length > 0 ? '<span class="article-stat-sentence">📐 ' + articleSentences.length + ' 个长句</span>' : '');
+                statsRow.innerHTML = '<span class="article-stat-word">' + Icon.svg('book-open-text',14) + ' ' + this.currentArticle.words.length + ' 个单词</span>' +
+                    (articleSentences.length > 0 ? '<span class="article-stat-sentence">' + Icon.svg('graph',14) + ' ' + articleSentences.length + ' 个长句</span>' : '');
                 var articleTitleEl = vocabularyArticle.querySelector('.vocabulary-article-title');
                 if (articleTitleEl) {
                     articleTitleEl.insertAdjacentElement('afterend', statsRow);
@@ -1860,7 +1860,7 @@ class WordbookApp {
 
             // 隐藏统计数字
             this.reviewComplete.querySelector('.complete-stats').classList.add('hidden');
-            this.reviewComplete.querySelector('.complete-icon').textContent = '🎯';
+            this.reviewComplete.querySelector('.complete-icon').innerHTML = Icon.svg('target',40);
             this.reviewComplete.querySelector('.complete-title').textContent = '暂无待复习单词';
 
             // 找到最早到期的卡片，显示下次复习时间
@@ -1882,7 +1882,7 @@ class WordbookApp {
             }
 
             this.retryForgottenBtn.classList.remove('hidden');
-            this.retryForgottenBtn.textContent = '📚 复习全部单词（' + this.wordbook.length + ' 张）';
+            this.retryForgottenBtn.innerHTML = Icon.svg('book-open-text',18) + ' 复习全部单词（' + this.wordbook.length + ' 张）';
             this.reviewComplete.classList.remove('hidden');
             this.reviewProgress.textContent = '全部在周期内';
             return;
@@ -2027,7 +2027,7 @@ class WordbookApp {
         this.reviewSentenceSection.classList.add('hidden');
 
         // 恢复面板图标和标题（上一次可能是"暂无待复习"状态）
-        this.reviewComplete.querySelector('.complete-icon').textContent = '🎉';
+        this.reviewComplete.querySelector('.complete-icon').innerHTML = Icon.svg('trophy-fill',40);
         this.reviewComplete.querySelector('.complete-title').textContent = '复习完成！';
         this.reviewCompleteSubtitle.classList.add('hidden');
         this.reviewComplete.querySelector('.complete-stats').classList.remove('hidden');
@@ -2042,8 +2042,8 @@ class WordbookApp {
             this.retryForgottenBtn.classList.add('hidden');
         } else {
             this.retryForgottenBtn.classList.remove('hidden');
-            this.retryForgottenBtn.textContent =
-                '🔄 再复习一遍忘记的（' + this.reviewForgottenCards.size + ' 张）';
+            this.retryForgottenBtn.innerHTML =
+                Icon.svg('arrows-clockwise-bold',18) + ' 再复习一遍忘记的（' + this.reviewForgottenCards.size + ' 张）';
         }
 
         // 显示完成面板
@@ -2337,7 +2337,7 @@ class WordbookApp {
         this.sentenceCount.textContent = `共有${this.sentencebook.length}条长句`;
 
         if (this.sentencebook.length === 0) {
-            this.sentenceList.innerHTML = '<div class="empty-state">📐<br>暂无长句<br><span style="font-size:14px;">在添加文章时长按拖选句子来收藏</span></div>';
+            this.sentenceList.innerHTML = '<div class="empty-state">' + Icon.svg('graph',32) + '<br>暂无长句<br><span style="font-size:14px;">在添加文章时长按拖选句子来收藏</span></div>';
             return;
         }
 
@@ -2624,7 +2624,7 @@ class WordbookApp {
             this.sentenceReviewAnalysis.classList.add('hidden');
 
             this.sentenceReviewComplete.querySelector('.complete-stats').classList.add('hidden');
-            this.sentenceReviewComplete.querySelector('.complete-icon').textContent = '🎯';
+            this.sentenceReviewComplete.querySelector('.complete-icon').innerHTML = Icon.svg('target',40);
             this.sentenceReviewComplete.querySelector('.complete-title').textContent = '暂无待复习长句';
 
             // 找到最早到期的长句
@@ -2646,7 +2646,7 @@ class WordbookApp {
             }
 
             this.sentenceRetryForgottenBtn.classList.remove('hidden');
-            this.sentenceRetryForgottenBtn.textContent = '📚 复习全部长句（' + this.sentencebook.length + ' 条）';
+            this.sentenceRetryForgottenBtn.innerHTML = Icon.svg('book-open-text',18) + ' 复习全部长句（' + this.sentencebook.length + ' 条）';
             this.sentenceReviewComplete.classList.remove('hidden');
             this.sentenceReviewProgress.textContent = '全部在周期内';
             return;
@@ -2755,7 +2755,7 @@ class WordbookApp {
         this.sentenceReviewAnalysis.classList.add('hidden');
 
         // 恢复面板状态（上一次可能是"暂无待复习"）
-        this.sentenceReviewComplete.querySelector('.complete-icon').textContent = '🎉';
+        this.sentenceReviewComplete.querySelector('.complete-icon').innerHTML = Icon.svg('trophy-fill',40);
         this.sentenceReviewComplete.querySelector('.complete-title').textContent = '长句复习完成！';
         this.sentenceCompleteSubtitle.classList.add('hidden');
         this.sentenceReviewComplete.querySelector('.complete-stats').classList.remove('hidden');
@@ -2770,8 +2770,8 @@ class WordbookApp {
             this.sentenceRetryForgottenBtn.classList.add('hidden');
         } else {
             this.sentenceRetryForgottenBtn.classList.remove('hidden');
-            this.sentenceRetryForgottenBtn.textContent =
-                '🔄 再复习一遍忘记的（' + this.sentenceReviewForgotten.size + ' 条）';
+            this.sentenceRetryForgottenBtn.innerHTML =
+                Icon.svg('arrows-clockwise-bold',18) + ' 再复习一遍忘记的（' + this.sentenceReviewForgotten.size + ' 条）';
         }
 
         // 显示完成面板
@@ -2927,5 +2927,6 @@ class WordbookApp {
 
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
+    Icon.mount();
     window.app = new WordbookApp();
 });

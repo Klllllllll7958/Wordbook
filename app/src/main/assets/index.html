@@ -57,7 +57,7 @@
                         <li>将密钥填入上方输入框并保存</li>
                     </ol>
                     <p style="margin-top: 12px; color: #888; font-size: 13px;">
-                        💡 DeepSeek API价格低廉，新用户通常有免费额度。AI会智能返回单词的词性和中文释义。
+                        <i class="icon" data-icon="lightbulb" data-size="16"></i> DeepSeek API价格低廉，新用户通常有免费额度。AI会智能返回单词的词性和中文释义。
                     </p>
                 </div>
             </div>
@@ -150,8 +150,8 @@
             </div>
 
             <div class="section-body word-selection-body">
-                <p class="hint">💡 点按选中单词 ｜ 长按单词并拖动选择长句</p>
-                <p class="count">已选中 <span id="selected-count">0</span> 个单词</p>
+                <p class="hint"><i class="icon" data-icon="lightbulb" data-size="16"></i> 点按选中单词 ｜ 长按单词并拖动选择长句</p>
+                <p class="count"><i class="icon" data-icon="note-pencil" data-size="16"></i> 已选中 <span id="selected-count">0</span> 个单词</p>
 
                 <div id="word-display" class="word-display">
                     <!-- 分割后的单词将显示在这里 -->
@@ -222,15 +222,15 @@
 
             <!-- 原句与翻译（翻转卡片后显示） -->
             <div class="review-sentence-section hidden" id="review-sentence-section">
-                <div class="review-sentence-label">📝 原句</div>
+                <div class="review-sentence-label"><i class="icon" data-icon="note-pencil" data-size="16"></i> 原句</div>
                 <div class="review-sentence-text" id="review-sentence-original"></div>
-                <div class="review-sentence-label">🔤 翻译</div>
+                <div class="review-sentence-label"><i class="icon" data-icon="translate" data-size="16"></i> 翻译</div>
                 <div class="review-sentence-text review-sentence-translation" id="review-sentence-translation"></div>
             </div>
 
             <!-- 复习完成面板 -->
             <div class="review-complete hidden" id="review-complete">
-                <div class="complete-icon">🎉</div>
+                <div class="complete-icon"><i class="icon" data-icon="trophy-fill" data-size="48"></i></div>
                 <h3 class="complete-title">复习完成！</h3>
                 <p class="complete-subtitle hidden" id="complete-subtitle"></p>
                 <div class="complete-stats">
@@ -249,10 +249,10 @@
                 </div>
                 <div class="complete-actions">
                     <button class="btn-primary" id="retry-forgotten-btn">
-                        🔄 再复习一遍忘记的
+                        <i class="icon" data-icon="arrows-clockwise-bold" data-size="18"></i> 再复习一遍忘记的
                     </button>
                     <button class="btn-secondary" id="back-from-complete-btn">
-                        🏠 返回单词本
+                        <i class="icon" data-icon="house" data-size="18"></i> 返回单词本
                     </button>
                 </div>
             </div>
@@ -298,18 +298,18 @@
 
             <!-- 句子结构分析（翻转卡片后显示） -->
             <div class="review-sentence-section hidden" id="sentence-review-analysis">
-                <div class="review-sentence-label">📐 句子结构解析</div>
+                <div class="review-sentence-label"><i class="icon" data-icon="graph" data-size="16"></i> 句子结构解析</div>
                 <div class="review-sentence-text" id="sentence-review-colored"></div>
                 <div id="sentence-review-legend" class="sentence-legend"></div>
-                <div class="review-sentence-label">📋 逐层拆解</div>
+                <div class="review-sentence-label"><i class="icon" data-icon="list-numbers" data-size="16"></i> 逐层拆解</div>
                 <div class="review-sentence-text" id="sentence-review-breakdown"></div>
-                <div class="review-sentence-label">🌳 结构树状图</div>
+                <div class="review-sentence-label"><i class="icon" data-icon="tree-structure" data-size="16"></i> 结构树状图</div>
                 <div class="review-sentence-text review-sentence-translation" id="sentence-review-tree"></div>
             </div>
 
             <!-- 长句复习完成面板 -->
             <div class="review-complete hidden" id="sentence-review-complete">
-                <div class="complete-icon">🎉</div>
+                <div class="complete-icon"><i class="icon" data-icon="trophy-fill" data-size="48"></i></div>
                 <h3 class="complete-title">长句复习完成！</h3>
                 <p class="complete-subtitle hidden" id="sentence-complete-subtitle"></p>
                 <div class="complete-stats">
@@ -328,10 +328,10 @@
                 </div>
                 <div class="complete-actions">
                     <button class="btn-primary" id="sentence-retry-forgotten-btn">
-                        🔄 再复习一遍忘记的
+                        <i class="icon" data-icon="arrows-clockwise-bold" data-size="18"></i> 再复习一遍忘记的
                     </button>
                     <button class="btn-secondary" id="sentence-back-from-complete-btn">
-                        🏠 返回长句本
+                        <i class="icon" data-icon="house" data-size="18"></i> 返回长句本
                     </button>
                 </div>
             </div>
@@ -417,14 +417,14 @@
 
             <div class="section-body sentence-detail-body">
                 <div class="sentence-detail-original" id="sentence-detail-original"></div>
-                <div class="sentence-detail-label">📐 句子结构解析</div>
+                <div class="sentence-detail-label"><i class="icon" data-icon="graph" data-size="16"></i> 句子结构解析</div>
                 <div class="review-sentence-text" id="sentence-detail-colored"></div>
                 <div id="sentence-detail-legend" class="sentence-legend"></div>
-                <div class="sentence-detail-label">📋 逐层拆解</div>
+                <div class="sentence-detail-label"><i class="icon" data-icon="list-numbers" data-size="16"></i> 逐层拆解</div>
                 <div class="review-sentence-text" id="sentence-detail-breakdown"></div>
-                <div class="sentence-detail-label">🌳 结构树状图</div>
+                <div class="sentence-detail-label"><i class="icon" data-icon="tree-structure" data-size="16"></i> 结构树状图</div>
                 <div class="review-sentence-text review-sentence-translation" id="sentence-detail-tree"></div>
-                <div class="sentence-detail-label">📝 中文翻译</div>
+                <div class="sentence-detail-label"><i class="icon" data-icon="note-pencil" data-size="16"></i> 中文翻译</div>
                 <div class="review-sentence-text" id="sentence-detail-translation"></div>
             </div>
         </section>
@@ -451,9 +451,9 @@
             </div>
 
             <div class="review-sentence-section hidden" id="word-detail-sentence-section">
-                <div class="review-sentence-label">📝 原句</div>
+                <div class="review-sentence-label"><i class="icon" data-icon="note-pencil" data-size="16"></i> 原句</div>
                 <div class="review-sentence-text" id="word-detail-sentence"></div>
-                <div class="review-sentence-label">🔤 翻译</div>
+                <div class="review-sentence-label"><i class="icon" data-icon="translate" data-size="16"></i> 翻译</div>
                 <div class="review-sentence-text review-sentence-translation" id="word-detail-sentence-translation"></div>
             </div>
         </section>
@@ -497,6 +497,7 @@
     </footer>
 
     <script src="dictionary.js"></script>
+    <script src="icons.js"></script>
     <script src="translator.js"></script>
     <script src="fsrs.js"></script>
     <script src="app.js"></script>

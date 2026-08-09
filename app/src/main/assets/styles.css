@@ -6,21 +6,26 @@
 }
 
 :root {
-    --primary-color: oklch(74.6% 0.16 232.661);
-    --primary-light: oklch(90% 0.08 232);
-    --primary-dark: oklch(55% 0.18 252);
-    --secondary-color: #757575;
-    --accent-color: #2196F3;
-    --accent-light: #64B5F6;
-    --accent-dark: #1976D2;
-    --background-color: #f8f9fa;
+    /* ── 蓝色主题主色系 ── */
+    --primary-color: oklch(55% 0.18 255);
+    --primary-light: oklch(90% 0.04 255);
+    --primary-dark: oklch(38% 0.16 258);
+    /* ── 辅助色 ── */
+    --secondary-color: #64748B;
+    --accent-color: oklch(60% 0.16 240);
+    --accent-light: oklch(88% 0.05 240);
+    --accent-dark: oklch(42% 0.16 245);
+    /* ── 中性色（冷调灰蓝底） ── */
+    --background-color: #f4f6fa;
     --card-background: #ffffff;
-    --text-primary: #212121;
-    --text-secondary: #757575;
-    --text-light: #9E9E9E;
-    --border-color: #e0e0e0;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --text-primary: #1a1d28;
+    --text-secondary: #64748B;
+    --text-light: #94A3B8;
+    --border-color: #e2e8f0;
+    /* ── 蓝色调阴影 ── */
+    --shadow: 0 2px 8px rgba(30, 58, 138, 0.08);
+    --shadow-hover: 0 4px 16px rgba(30, 58, 138, 0.12);
+    /* ── 圆角 & 过渡 ── */
     --border-radius: 16px;
     --border-radius-sm: 8px;
     --transition: all 0.3s ease;
@@ -36,6 +41,15 @@ body {
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* 图标占位符 — Icon.mount() 替换前不可见 */
+i.icon[data-icon] {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    opacity: 0;
 }
 
 
@@ -251,18 +265,18 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.25);
 }
 
 .btn-primary:hover {
     background-color: var(--primary-dark);
-    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.35);
     transform: translateY(-1px);
 }
 
 .btn-primary:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.25);
 }
 
 .btn-primary:disabled {
@@ -285,18 +299,18 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.2);
 }
 
 .btn-secondary:hover {
     background-color: var(--accent-dark);
-    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
     transform: translateY(-1px);
 }
 
 .btn-secondary:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.2);
 }
 
 /* 文章卡片列表 */
@@ -488,10 +502,7 @@ body {
     gap: 4px;
 }
 
-.article-words::before {
-    content: '📚';
-    font-size: 12px;
-}
+/* article-words icon now inline via Icon.svg() in app.js */
 
 .article-sentences {
     font-size: 13px;
@@ -502,10 +513,7 @@ body {
     gap: 4px;
 }
 
-.article-sentences::before {
-    content: '📐';
-    font-size: 12px;
-}
+/* article-sentences icon now inline via Icon.svg() in app.js */
 
 .article-date {
     font-size: 12px;
@@ -515,10 +523,7 @@ body {
     gap: 4px;
 }
 
-.article-date::before {
-    content: '📅';
-    font-size: 12px;
-}
+/* article-date icon now inline via Icon.svg() in app.js */
 
 .article-excerpt {
     font-size: 15px;
@@ -574,7 +579,7 @@ body {
 }
 
 .wordbook-list-item:hover {
-    background-color: rgba(102, 126, 234, 0.05);
+    background-color: rgba(37, 99, 235, 0.05);
 }
 
 /* 长按动画效果 */
@@ -645,7 +650,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(102, 126, 234, 0.05);
+    background-color: rgba(37, 99, 235, 0.05);
     z-index: 0;
 }
 
@@ -712,7 +717,7 @@ body {
     color: var(--text-secondary);
     line-height: 1.6;
     padding-right: 8px;
-    background: rgba(102, 126, 234, 0.05);
+    background: rgba(37, 99, 235, 0.05);
     padding: 12px;
     border-radius: var(--border-radius-sm);
     border-left: 3px solid var(--accent-light);
@@ -745,7 +750,7 @@ body {
     border-color: var(--accent-color);
     color: var(--accent-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
 }
 
 .word-card-btn:active {
@@ -864,7 +869,7 @@ textarea {
 textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     transform: translateY(-1px);
 }
 
@@ -882,7 +887,7 @@ input[type="text"], input[type="password"] {
 input[type="text"]:focus, input[type="password"]:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     transform: translateY(-1px);
 }
 
@@ -927,9 +932,9 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .word.selected {
-    color: oklch(38% 0.16 252);
+    color: oklch(38% 0.16 258);
     font-weight: 700;
-    background-color: oklch(92% 0.06 232);         /* 蓝色背景，已选中 */
+    background-color: oklch(92% 0.04 255);         /* 蓝色背景，已选中 */
     padding: 1px 2px;
     border-radius: 3px;
     box-shadow: none;
@@ -957,7 +962,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 .sentence-color-0 { border-bottom: 3px solid #f59e0b; }  /* orange */
 .sentence-color-1 { border-bottom: 3px solid #a855f7; }  /* purple */
 .sentence-color-2 { border-bottom: 3px solid #3b82f6; }  /* blue */
-.sentence-color-3 { border-bottom: 3px solid oklch(74.6% 0.16 232.661); }  /* blue */
+.sentence-color-3 { border-bottom: 3px solid oklch(55% 0.18 255); }  /* blue */
 .sentence-color-4 { border-bottom: 3px solid #ef4444; }  /* red */
 
 /* 提示和计数 */
@@ -974,10 +979,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     font-size: 15px;
 }
 
-.count::before {
-    content: '📝 ';
-    font-size: 16px;
-}
+/* .count icon now inline via Icon.svg() in app.js */
 
 /* API配置表单 */
 .api-config-form {
@@ -1017,7 +1019,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 .form-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     transform: translateY(-1px);
 }
 
@@ -1057,7 +1059,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 .api-status.success {
     color: var(--primary-color);
     border-left-color: var(--primary-color);
-    background-color: rgba(76, 175, 80, 0.1);
+    background-color: rgba(37, 99, 235, 0.1);
 }
 
 .api-status.error {
@@ -1214,7 +1216,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .btn-option:hover {
     border-color: var(--primary-color);
-    background-color: rgba(76, 175, 80, 0.05);
+    background-color: rgba(37, 99, 235, 0.05);
     transform: translateY(-2px);
 }
 
@@ -1384,7 +1386,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 .nav-item.active {
     color: var(--primary-color);
     font-weight: 600;
-    background-color: rgba(76, 175, 80, 0.1);
+    background-color: rgba(37, 99, 235, 0.1);
 }
 
 .nav-item span {
@@ -1651,7 +1653,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .vocabulary-nav-btn svg {
-    stroke: #3498db;
+    stroke: var(--primary-color);
 }
 
 /* 复习进度文字 */
@@ -1703,43 +1705,44 @@ input[type="text"]:focus, input[type="password"]:focus {
     opacity: 0.7;
 }
 
-/* 忘记 — 红色 */
+/* ── 评分按钮 — 统一 oklch 色系结构 ── */
+/* 忘记 — 紫色 */
 .rating-again {
-    background-color: #ffebee;
-    color: #c62828;
-    border: 1px solid #ef9a9a;
+    background-color: oklch(96% 0.012 300);
+    color: oklch(40% 0.18 290);
+    border: 1px solid oklch(82% 0.10 295);
 }
 .rating-again:hover {
-    background-color: #ffcdd2;
+    background-color: oklch(93% 0.03 300);
 }
 .rating-again:active {
-    background-color: #ef9a9a;
+    background-color: oklch(88% 0.08 295);
 }
 
-/* 困难 — 橙色 */
+/* 困难 — 蓝色 */
 .rating-hard {
-    background-color: #fff3e0;
-    color: #e65100;
-    border: 1px solid #ffcc80;
+    background-color: oklch(96% 0.012 255);
+    color: oklch(38% 0.16 258);
+    border: 1px solid oklch(80% 0.12 255);
 }
 .rating-hard:hover {
-    background-color: #ffe0b2;
+    background-color: oklch(90% 0.04 255);
 }
 .rating-hard:active {
-    background-color: #ffcc80;
+    background-color: oklch(80% 0.12 255);
 }
 
-/* 正常 — 蓝色 */
+/* 正常 — 绿色 */
 .rating-good {
-    background-color: oklch(96% 0.015 232);
-    color: oklch(38% 0.16 252);
-    border: 1px solid oklch(74.6% 0.16 232.661);
+    background-color: oklch(96% 0.015 145);
+    color: oklch(42% 0.17 148);
+    border: 1px solid oklch(80% 0.12 150);
 }
 .rating-good:hover {
-    background-color: oklch(90% 0.06 232);
+    background-color: oklch(93% 0.04 145);
 }
 .rating-good:active {
-    background-color: oklch(80% 0.12 232);
+    background-color: oklch(88% 0.10 148);
 }
 
 /* 复习页面 — 原句与翻译区域 */
@@ -1778,7 +1781,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .review-sentence-translation {
     color: var(--text-secondary, #666);
-    border-left-color: oklch(74.6% 0.16 232.661);
+    border-left-color: oklch(55% 0.18 255);
 }
 
 /* 句子中目标单词/释义的高亮 */
@@ -1817,7 +1820,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .article-original .highlighted-word {
-    background-color: rgba(102, 126, 234, 0.2);
+    background-color: rgba(37, 99, 235, 0.2);
     padding: 2px 4px;
     border-radius: 4px;
     font-weight: 500;
@@ -1882,7 +1885,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .highlighted-word {
-    background-color: oklch(74.6% 0.16 232.661);
+    background-color: oklch(55% 0.18 255);
     color: white;
     padding: 2px 6px;
     border-radius: 4px;
@@ -1903,7 +1906,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     min-height: 220px;
     cursor: pointer;
     position: relative;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
     border-radius: 20px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
     padding: 28px;
@@ -1928,12 +1931,12 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .word-card.show-meaning {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border: 2px solid #667eea;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    border: 2px solid #3b82f6;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
 }
 
 .word-card.show-meaning::before {
-    background: linear-gradient(45deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+    background: linear-gradient(45deg, rgba(37, 99, 235, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
 }
 
 .word-card-content {
@@ -1986,12 +1989,12 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .word-card.show-meaning .word-card-meaning {
     color: var(--text-primary);
-    background: rgba(102, 126, 234, 0.08);
-    border-left: 4px solid #667eea;
+    background: rgba(37, 99, 235, 0.08);
+    border-left: 4px solid #3b82f6;
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
 }
 
 .word-navigation {
@@ -2009,7 +2012,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     padding: 12px 20px;
     border: none;
     border-radius: 8px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
     color: white;
     font-size: 16px;
     font-weight: 500;
@@ -2019,7 +2022,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .nav-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .nav-btn:active {
@@ -2079,13 +2082,13 @@ input[type="text"]:focus, input[type="password"]:focus {
     right: 20px;
     z-index: 999;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
     color: white;
     border: none;
     border-radius: 24px;
     font-size: 14px;
     font-weight: 600;
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
     cursor: pointer;
     transition: transform 0.2s ease;
 }
@@ -2149,7 +2152,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     padding: 16px;
     border-radius: 12px;
     margin-bottom: 16px;
-    border-left: 3px solid #667eea;
+    border-left: 3px solid #3b82f6;
 }
 
 .sentence-detail-label {
@@ -2202,8 +2205,8 @@ input[type="text"]:focus, input[type="password"]:focus {
 .sentence-segment.type-main { background: #eff6ff; color: #1e40af; border-bottom: 2px solid #3b82f6; }
 
 /* ---- 名词性从句: 蓝色系, 嵌套加深 ---- */
-.sentence-segment.type-that-object     { background: oklch(96% 0.015 232); color: oklch(38% 0.16 252); border-bottom: 2px solid oklch(74.6% 0.16 232.661); }
-.sentence-segment.type-embedded-object { background: oklch(94% 0.025 228); color: oklch(32% 0.17 248); border-bottom: 2px solid oklch(74.6% 0.16 232.661); }
+.sentence-segment.type-that-object     { background: oklch(96% 0.012 255); color: oklch(38% 0.16 258); border-bottom: 2px solid oklch(55% 0.18 255); }
+.sentence-segment.type-embedded-object { background: oklch(94% 0.025 250); color: oklch(32% 0.17 258); border-bottom: 2px solid oklch(55% 0.18 255); }
 
 /* ---- 形容词性从句 (Orange) ---- */
 .sentence-segment.type-which-relative { background: #fef7ed; color: #9a3412; border-bottom: 2px solid #f97316; }
@@ -2242,8 +2245,8 @@ input[type="text"]:focus, input[type="password"]:focus {
     flex-shrink: 0;
 }
 .sentence-legend-swatch.sw-main             { background: #eff6ff; border-bottom: 2px solid #3b82f6; }
-.sentence-legend-swatch.sw-that-object      { background: oklch(96% 0.015 232); border-bottom: 2px solid oklch(74.6% 0.16 232.661); }
-.sentence-legend-swatch.sw-embedded-object  { background: oklch(94% 0.025 228); border-bottom: 2px solid oklch(74.6% 0.16 232.661); }
+.sentence-legend-swatch.sw-that-object      { background: oklch(96% 0.012 255); border-bottom: 2px solid oklch(55% 0.18 255); }
+.sentence-legend-swatch.sw-embedded-object  { background: oklch(94% 0.025 250); border-bottom: 2px solid oklch(55% 0.18 255); }
 .sentence-legend-swatch.sw-which-relative   { background: #fef7ed; border-bottom: 2px solid #f97316; }
 .sentence-legend-swatch.sw-concessive       { background: #f5f3ff; border-bottom: 2px solid #8b5cf6; }
 .sentence-legend-swatch.sw-conditional      { background: #fff1f2; border-bottom: 2px solid #f43f5e; }
@@ -2356,7 +2359,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .stat-good {
-    background: oklch(96% 0.015 232);
+    background: oklch(96% 0.012 255);
 }
 
 .stat-hard {
@@ -2373,7 +2376,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     line-height: 1;
 }
 
-.stat-good .stat-num { color: oklch(38% 0.16 252); }
+.stat-good .stat-num { color: oklch(38% 0.16 258); }
 .stat-hard .stat-num { color: #e65100; }
 .stat-again .stat-num { color: #c62828; }
 
