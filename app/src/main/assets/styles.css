@@ -956,14 +956,14 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* 长句划线样式 */
 .word.drawing {
-    border-bottom: 3px dashed #f59e0b;
+    border-bottom: 3px dashed oklch(82% 0.10 295);
 }
 
-.sentence-color-0 { border-bottom: 3px solid #f59e0b; }  /* orange */
-.sentence-color-1 { border-bottom: 3px solid #a855f7; }  /* purple */
-.sentence-color-2 { border-bottom: 3px solid #3b82f6; }  /* blue */
-.sentence-color-3 { border-bottom: 3px solid oklch(55% 0.18 255); }  /* blue */
-.sentence-color-4 { border-bottom: 3px solid #ef4444; }  /* red */
+.sentence-color-0,
+.sentence-color-1,
+.sentence-color-2,
+.sentence-color-3,
+.sentence-color-4 { border-bottom: 3px solid oklch(82% 0.10 295); }
 
 /* 提示和计数 */
 .hint {
@@ -1787,9 +1787,9 @@ input[type="text"]:focus, input[type="password"]:focus {
 /* 句子中目标单词/释义的高亮 */
 .sentence-highlight {
     font-weight: 700;
-    color: #e65100;
-    background: #fff3e0;
-    padding: 1px 4px;
+    background-color: oklch(55% 0.18 255 / 0.2);
+    color: var(--accent-color);
+    padding: 2px 6px;
     border-radius: 4px;
 }
 
@@ -1828,7 +1828,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .article-original .highlighted-sentence {
-    border-bottom: 3px solid #f59e0b;
+    border-bottom: 3px solid oklch(82% 0.10 295);
     padding-bottom: 2px;
 }
 
@@ -2201,26 +2201,29 @@ input[type="text"]:focus, input[type="password"]:focus {
     cursor: pointer;
 }
 
-/* ---- 主干结构 (Blue) ---- */
-.sentence-segment.type-main { background: #eff6ff; color: #1e40af; border-bottom: 2px solid #3b82f6; }
+/* ── 句子结构颜色体系 — 全部 oklch，与蓝色主题统一 ── */
+/* 9 种语法类型均用 bg≈96% / text≈38% / border≈72% 的同一结构，仅色相不同 */
 
-/* ---- 名词性从句: 蓝色系, 嵌套加深 ---- */
-.sentence-segment.type-that-object     { background: oklch(96% 0.012 255); color: oklch(38% 0.16 258); border-bottom: 2px solid oklch(55% 0.18 255); }
-.sentence-segment.type-embedded-object { background: oklch(94% 0.025 250); color: oklch(32% 0.17 258); border-bottom: 2px solid oklch(55% 0.18 255); }
+/* 主干 (Blue — 主题蓝) */
+.sentence-segment.type-main { background: oklch(96% 0.012 255); color: oklch(38% 0.16 258); border-bottom: 2px solid oklch(55% 0.18 255); }
 
-/* ---- 形容词性从句 (Orange) ---- */
-.sentence-segment.type-which-relative { background: #fef7ed; color: #9a3412; border-bottom: 2px solid #f97316; }
+/* 名词性从句 (Teal — 青蓝) */
+.sentence-segment.type-that-object     { background: oklch(96% 0.015 200); color: oklch(38% 0.14 205); border-bottom: 2px solid oklch(72% 0.14 200); }
+.sentence-segment.type-embedded-object { background: oklch(94% 0.025 195); color: oklch(35% 0.15 198); border-bottom: 2px solid oklch(65% 0.16 195); }
 
-/* ---- 副词性从句: 同属冷色, 各不同相 ---- */
-.sentence-segment.type-concessive  { background: #f5f3ff; color: #5b21b6; border-bottom: 2px solid #8b5cf6; }  /* Violet */
-.sentence-segment.type-conditional { background: #fff1f2; color: #9f1239; border-bottom: 2px solid #f43f5e; }  /* Rose   */
-.sentence-segment.type-inf-purpose { background: #f0f9ff; color: #075985; border-bottom: 2px solid #38bdf8; }  /* Sky    */
+/* 形容词性 / 定语从句 (Orange — 暖橙) */
+.sentence-segment.type-which-relative { background: oklch(96% 0.018 65); color: oklch(40% 0.17 55); border-bottom: 2px solid oklch(75% 0.16 60); }
 
-/* ---- 特殊结构 (Pink) ---- */
-.sentence-segment.type-cleft { background: #fdf2f8; color: #9d174d; border-bottom: 2px solid #ec4899; }
+/* 副词性从句: 冷色系, 各不同相 */
+.sentence-segment.type-concessive  { background: oklch(96% 0.015 300); color: oklch(35% 0.16 290); border-bottom: 2px solid oklch(70% 0.16 295); }  /* Violet  */
+.sentence-segment.type-conditional { background: oklch(96% 0.015 10);  color: oklch(38% 0.17 20);  border-bottom: 2px solid oklch(70% 0.17 15);  }  /* Rose    */
+.sentence-segment.type-inf-purpose { background: oklch(96% 0.015 230); color: oklch(40% 0.15 235); border-bottom: 2px solid oklch(73% 0.15 235); }  /* Sky     */
 
-/* ---- 兜底 (Warm Gray) ---- */
-.sentence-segment.type-other-clause { background: #fafaf9; color: #44403c; border-bottom: 2px solid #a8a29e; }
+/* 特殊结构 (Pink) */
+.sentence-segment.type-cleft { background: oklch(96% 0.015 350); color: oklch(38% 0.17 345); border-bottom: 2px solid oklch(70% 0.17 350); }
+
+/* 兜底 (Warm Gray) */
+.sentence-segment.type-other-clause { background: oklch(97% 0.005 90); color: oklch(45% 0.02 80); border-bottom: 2px solid oklch(75% 0.02 85); }
 
 /* ---- 颜色图例 ---- */
 .sentence-legend {
@@ -2244,15 +2247,15 @@ input[type="text"]:focus, input[type="password"]:focus {
     border-radius: 3px;
     flex-shrink: 0;
 }
-.sentence-legend-swatch.sw-main             { background: #eff6ff; border-bottom: 2px solid #3b82f6; }
-.sentence-legend-swatch.sw-that-object      { background: oklch(96% 0.012 255); border-bottom: 2px solid oklch(55% 0.18 255); }
-.sentence-legend-swatch.sw-embedded-object  { background: oklch(94% 0.025 250); border-bottom: 2px solid oklch(55% 0.18 255); }
-.sentence-legend-swatch.sw-which-relative   { background: #fef7ed; border-bottom: 2px solid #f97316; }
-.sentence-legend-swatch.sw-concessive       { background: #f5f3ff; border-bottom: 2px solid #8b5cf6; }
-.sentence-legend-swatch.sw-conditional      { background: #fff1f2; border-bottom: 2px solid #f43f5e; }
-.sentence-legend-swatch.sw-inf-purpose      { background: #f0f9ff; border-bottom: 2px solid #38bdf8; }
-.sentence-legend-swatch.sw-cleft            { background: #fdf2f8; border-bottom: 2px solid #ec4899; }
-.sentence-legend-swatch.sw-other-clause     { background: #fafaf9; border-bottom: 2px solid #a8a29e; }
+.sentence-legend-swatch.sw-main             { background: oklch(96% 0.012 255); border-bottom: 2px solid oklch(55% 0.18 255); }
+.sentence-legend-swatch.sw-that-object      { background: oklch(96% 0.015 200); border-bottom: 2px solid oklch(72% 0.14 200); }
+.sentence-legend-swatch.sw-embedded-object  { background: oklch(94% 0.025 195); border-bottom: 2px solid oklch(65% 0.16 195); }
+.sentence-legend-swatch.sw-which-relative   { background: oklch(96% 0.018 65);  border-bottom: 2px solid oklch(75% 0.16 60);  }
+.sentence-legend-swatch.sw-concessive       { background: oklch(96% 0.015 300); border-bottom: 2px solid oklch(70% 0.16 295); }
+.sentence-legend-swatch.sw-conditional      { background: oklch(96% 0.015 10);  border-bottom: 2px solid oklch(70% 0.17 15);  }
+.sentence-legend-swatch.sw-inf-purpose      { background: oklch(96% 0.015 230); border-bottom: 2px solid oklch(73% 0.15 235); }
+.sentence-legend-swatch.sw-cleft            { background: oklch(96% 0.015 350); border-bottom: 2px solid oklch(70% 0.17 350); }
+.sentence-legend-swatch.sw-other-clause     { background: oklch(97% 0.005 90);  border-bottom: 2px solid oklch(75% 0.02 85);  }
 
 /* 移动端: 点击句子片段弹出类型/角色提示 */
 .sentence-segment-popup {

@@ -4,7 +4,7 @@ class WordbookApp {
         // 状态管理
         this.selectedWords = new Set();
         this.selectedSentences = []; // {startId, endId, colorIndex}
-        this.sentenceColorIndex = 0;
+        this.sentenceColorIndex = 1;  // 固定紫色
         this.isDrawingSentence = false;
         this.sentenceDrawStartId = -1;
         this.sentenceDrawEndId = -1;
@@ -509,7 +509,7 @@ class WordbookApp {
         // 清空已选单词和长句
         this.selectedWords.clear();
         this.selectedSentences = [];
-        this.sentenceColorIndex = 0;
+        this.sentenceColorIndex = 1;  // 固定紫色
         this.updateSelectedCount();
 
         // 跳转到单词选择页面
@@ -732,14 +732,14 @@ class WordbookApp {
         }
 
         const wordsToAdd = Array.from(this.selectedWords);
+        const sentenceCount = this.selectedSentences.length;
 
-        if (wordsToAdd.length === 0) {
-            alert('请选择要添加的单词');
+        if (wordsToAdd.length === 0 && sentenceCount === 0) {
+            alert('请至少选择单词或长句');
             return;
         }
 
-        const sentenceCount = this.selectedSentences.length;
-        const totalTasks = sentenceCount + 1; // 单词翻译 + 长句数量
+        const totalTasks = (wordsToAdd.length > 0 ? 1 : 0) + sentenceCount;
         this.saveArticleBtn.textContent = `正在翻译 (0/${totalTasks})...`;
         this.saveArticleBtn.disabled = true;
 
@@ -753,16 +753,18 @@ class WordbookApp {
                 this.saveArticleBtn.textContent = `正在翻译 (${completedTasks}/${totalTasks})...`;
             };
 
-            // 1. 启动单词翻译任务
-            const wordPromise = translator.translateWordsWithSentences(
-                this.articleInput.value, wordsToAdd
-            ).catch(async (error) => {
-                console.warn('句子提取翻译失败，回退到仅翻译单词:', error.message);
-                const results = await translator.translateBatch(wordsToAdd);
-                return results.map(t => ({ ...t, sentence: '', sentenceTranslation: '' }));
-            }).finally(() => {
-                updateProgress();
-            });
+            // 1. 启动单词翻译任务（如果没有选中单词则跳过）
+            const wordPromise = wordsToAdd.length > 0
+                ? translator.translateWordsWithSentences(
+                    this.articleInput.value, wordsToAdd
+                ).catch(async (error) => {
+                    console.warn('句子提取翻译失败，回退到仅翻译单词:', error.message);
+                    const results = await translator.translateBatch(wordsToAdd);
+                    return results.map(t => ({ ...t, sentence: '', sentenceTranslation: '' }));
+                }).finally(() => {
+                    updateProgress();
+                })
+                : Promise.resolve([]);
 
             // 2. 启动所有长句分析任务（并行执行）
             let sentencePromise = Promise.resolve([]);
@@ -850,10 +852,14 @@ class WordbookApp {
             this.renderArticles();
             this.renderWordbook();
 
-            var msg = `成功保存文章和 ${translations.length} 个单词`;
-            if (savedSentenceCount > 0) {
-                msg += `，${savedSentenceCount} 条长句`;
+            var msgParts = [];
+            if (translations.length > 0) {
+                msgParts.push(`${translations.length} 个单词`);
             }
+            if (savedSentenceCount > 0) {
+                msgParts.push(`${savedSentenceCount} 条长句`);
+            }
+            var msg = '成功保存文章' + (msgParts.length > 0 ? '和 ' + msgParts.join('，') : '');
             alert(msg + '！');
         } catch (error) {
             console.error('保存失败:', error);
@@ -2556,7 +2562,7 @@ class WordbookApp {
                 endId: this.sentenceDrawEndId,
                 colorIndex: this.sentenceColorIndex
             });
-            this.sentenceColorIndex = (this.sentenceColorIndex + 1) % 5;
+            // 颜色固定为紫色，不再轮换
         }
         this.sentenceDrawStartId = -1;
         this.sentenceDrawEndId = -1;
