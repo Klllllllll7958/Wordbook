@@ -40,6 +40,11 @@ class WordbookApp {
         // 新增：当前正在创建的文章
         this.currentCreatingArticle = null;
 
+        // 问它状态
+        this.askMessages = [];      // 完整对话历史（不含 system）
+        this.askCurrentWord = null; // 当前详情页单词
+        this.askLoadingEl = null;   // 加载态气泡元素
+
         // DOM 元素
         this.articleTitleInput = document.getElementById('article-title-input');
         this.articleInput = document.getElementById('article-input');
@@ -148,6 +153,17 @@ class WordbookApp {
         this.wordDetailSentence = document.getElementById('word-detail-sentence');
         this.wordDetailSentenceTranslation = document.getElementById('word-detail-sentence-translation');
         this.backFromWordDetailBtn = document.getElementById('back-from-word-detail');
+
+        // 问它相关DOM元素
+        this.askItBtn = document.getElementById('ask-it-btn');
+        this.askSheetOverlay = document.getElementById('ask-sheet-overlay');
+        this.askSheet = document.getElementById('ask-sheet');
+        this.askSheetTitle = document.getElementById('ask-sheet-title');
+        this.askSheetClose = document.getElementById('ask-sheet-close');
+        this.askSheetChips = document.getElementById('ask-sheet-chips');
+        this.askSheetMessages = document.getElementById('ask-sheet-messages');
+        this.askSheetInput = document.getElementById('ask-sheet-input');
+        this.askSheetSend = document.getElementById('ask-sheet-send');
 
         // API配置相关DOM元素
         this.apiKeyInput = document.getElementById('apikey-input');
@@ -327,6 +343,18 @@ class WordbookApp {
 
         // 单词详情返回按钮
         this.backFromWordDetailBtn.addEventListener('click', () => this.closeWordDetail());
+
+        // 问它事件
+        this.askItBtn.addEventListener('click', () => this.openAskSheet());
+        this.askSheetClose.addEventListener('click', () => this.closeAskSheet());
+        this.askSheetOverlay.addEventListener('click', () => this.closeAskSheet());
+        this.askSheetSend.addEventListener('click', () => this.submitAsk());
+        this.askSheetInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.submitAsk();
+            }
+        });
         this.sentenceReviewRatings.querySelectorAll('.rating-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1253,12 +1281,192 @@ class WordbookApp {
         document.querySelector('.footer').classList.add('hidden');
         this.wordDetailSection.classList.remove('hidden');
         history.pushState({ page: 'word-detail' }, '', '');
+
+        // 重置问它会话
+        this.askMessages = [];
+        this.askCurrentWord = word;
+        this.clearAskMessages();
     }
 
     // 关闭单词详情页
     closeWordDetail() {
         this.wordDetailSection.classList.add('hidden');
         history.back();
+    }
+
+    // ========== 问它功能 ==========
+
+    // 打开问它面板
+    openAskSheet() {
+        if (!this.askCurrentWord) return;
+        this.askSheetTitle.textContent = '问它：' + this.askCurrentWord;
+        this.renderAskChips();
+        this.askSheetInput.value = '';
+        this.askSheetOverlay.classList.remove('hidden');
+        this.askSheet.classList.remove('hidden');
+    }
+
+    // 关闭问它面板（保留对话）
+    closeAskSheet() {
+        this.askSheetOverlay.classList.add('hidden');
+        this.askSheet.classList.add('hidden');
+    }
+
+    // 渲染快捷问题 chips
+    renderAskChips() {
+        var chips = ['在这里什么意思？', '还有其他意思吗？', '母语者怎么理解这个词？'];
+        var self = this;
+        this.askSheetChips.innerHTML = '';
+        chips.forEach(function(text) {
+            var chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'ask-chip';
+            chip.textContent = text;
+            chip.addEventListener('click', function() { self.askQuestion(text); });
+            self.askSheetChips.appendChild(chip);
+        });
+    }
+
+    // 获取当前详情页单词信息
+    getCurrentAskWordInfo() {
+        var self = this;
+        return this.wordbook.find(function(item) {
+            return item.word.toLowerCase() === self.askCurrentWord.toLowerCase();
+        }) || null;
+    }
+
+    // 提交输入框问题
+    submitAsk() {
+        var text = this.askSheetInput.value.trim();
+        if (!text) return;
+        this.askSheetInput.value = '';
+        this.askQuestion(text);
+    }
+
+    // 发起一次提问
+    async askQuestion(question) {
+        if (!this.askCurrentWord) return;
+        var wordInfo = this.getCurrentAskWordInfo();
+
+        // 组装本轮 user 消息：首轮附上下文，追问轮直接问（上下文已在历史首条）
+        var userContent;
+        if (this.askMessages.length === 0) {
+            userContent = window.askAgent.buildContext(wordInfo) + '\n\n【问题】' + question;
+        } else {
+            userContent = question;
+        }
+        this.askMessages.push({ role: 'user', content: userContent });
+
+        // 渲染用户气泡
+        this.renderAskMessage('user', question);
+
+        // 加载态
+        this.showAskLoading();
+
+        try {
+            var answer = await window.askAgent.ask(this.askMessages);
+            this.askMessages.push({ role: 'assistant', content: answer });
+            this.hideAskLoading();
+            this.renderAskMessage('assistant', answer);
+        } catch (error) {
+            this.hideAskLoading();
+            // 回滚未得到回答的 user 消息，避免污染追问上下文
+            this.askMessages.pop();
+            this.renderAskMessage('error', error.message || '请求失败，请重试');
+        }
+    }
+
+    // 渲染一条消息气泡
+    renderAskMessage(role, content) {
+        var bubble = document.createElement('div');
+        if (role === 'user') {
+            bubble.className = 'ask-bubble ask-bubble-user';
+            bubble.textContent = content;
+        } else if (role === 'assistant') {
+            bubble.className = 'ask-bubble ask-bubble-ai';
+            bubble.innerHTML = this.renderAskMarkdown(content);
+        } else {
+            bubble.className = 'ask-bubble ask-bubble-error';
+            bubble.textContent = content;
+        }
+        this.askSheetMessages.appendChild(bubble);
+        this.askSheetMessages.scrollTop = this.askSheetMessages.scrollHeight;
+    }
+
+    // 显示加载态
+    showAskLoading() {
+        this.askLoadingEl = document.createElement('div');
+        this.askLoadingEl.className = 'ask-bubble ask-bubble-ai ask-bubble-loading';
+        this.askLoadingEl.textContent = 'AI 思考中…';
+        this.askSheetMessages.appendChild(this.askLoadingEl);
+        this.askSheetMessages.scrollTop = this.askSheetMessages.scrollHeight;
+    }
+
+    // 隐藏加载态
+    hideAskLoading() {
+        if (this.askLoadingEl && this.askLoadingEl.parentNode) {
+            this.askLoadingEl.parentNode.removeChild(this.askLoadingEl);
+        }
+        this.askLoadingEl = null;
+    }
+
+    // 清空消息列表
+    clearAskMessages() {
+        this.askSheetMessages.innerHTML = '';
+        this.askLoadingEl = null;
+    }
+
+    // mini-markdown 渲染：**加粗**、| 表格、- 列表、换行
+    renderAskMarkdown(text) {
+        if (!text) return '';
+        var escaped = this.escapeHtml(text);
+        var lines = escaped.split('\n');
+        var html = '';
+        var inTable = false;
+
+        lines.forEach(function(line) {
+            var trimmed = line.trim();
+            if (!trimmed) {
+                if (inTable) { html += '</table>'; inTable = false; }
+                html += '<br>';
+                return;
+            }
+
+            // 表格分隔行（如 |:---|:---|），跳过
+            if (trimmed.indexOf('|') !== -1 && /^\|[\s:|-]+\|$/.test(trimmed)) {
+                return;
+            }
+
+            // 表格行
+            if (trimmed.indexOf('|') !== -1) {
+                if (!inTable) { html += '<table>'; inTable = true; }
+                var cells = trimmed.replace(/^\|/, '').replace(/\|$/, '').split('|');
+                html += '<tr>';
+                cells.forEach(function(cell) {
+                    html += '<td>' + cell.trim() + '</td>';
+                });
+                html += '</tr>';
+                return;
+            }
+
+            if (inTable) { html += '</table>'; inTable = false; }
+
+            // 列表行
+            if (/^- /.test(trimmed)) {
+                html += '<div class="ask-li">' + trimmed.replace(/^- /, '• ') + '</div>';
+                return;
+            }
+
+            // 普通行
+            html += '<div>' + trimmed + '</div>';
+        });
+
+        if (inTable) { html += '</table>'; }
+
+        // **加粗**
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+        return html;
     }
 
     // 编辑单词（保留，供其他场景使用）

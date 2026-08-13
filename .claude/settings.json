@@ -19,7 +19,17 @@
       "WebFetch(domain:cdn.jsdelivr.net)",
       "Bash(npm pack *)",
       "Bash(mkdir -p c:/Users/jpc79/AndroidStudioProjects/Wordbook/tmp_icons)",
-      "Bash(tar -xzf phosphor-icons-core-2.1.1.tgz)"
+      "Bash(tar -xzf phosphor-icons-core-2.1.1.tgz)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git tag *)",
+      "Bash(git push *)",
+      "Bash(echo \"=== Obsidian 英语目录 ===\" && ls -la \"C:/Users/jpc79/Documents/obsidian/英语/\" 2>&1 | head -40; echo \"=== 找 export_grammar.js ===\" && find \"C:/Users/jpc79/Documents/obsidian\" -name \"export_grammar.js\" 2>/dev/null; find \"C:/Users/jpc79/AndroidStudioProjects/Wordbook\" -name \"export_grammar.js\" 2>/dev/null)",
+      "Read(//c/Users/jpc79/Documents/obsidian/英语/**)",
+      "Read(//c/Users/jpc79/Documents/obsidian/**)",
+      "Read(//c/Users/jpc79/Documents/obsidian/英语/语法/**)",
+      "Bash(node --check askAgent.js)",
+      "Bash(node --check app.js)"
     ],
     "additionalDirectories": [
       "C:\\Users\\jpc79\\Documents\\obsidian\\计算机\\wordbook"

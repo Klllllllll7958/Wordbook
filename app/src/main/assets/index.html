@@ -456,6 +456,13 @@
                 <div class="review-sentence-label"><i class="icon" data-icon="translate" data-size="16"></i> 翻译</div>
                 <div class="review-sentence-text review-sentence-translation" id="word-detail-sentence-translation"></div>
             </div>
+
+            <!-- 问它入口 -->
+            <div class="ask-it-wrap">
+                <button id="ask-it-btn" type="button" class="btn-secondary ask-it-btn">
+                    <i class="icon" data-icon="note-pencil" data-size="16"></i> 问它：这个词为什么这么用？
+                </button>
+            </div>
         </section>
     </main>
 
@@ -496,9 +503,29 @@
         </nav>
     </footer>
 
+    <!-- 问它提问面板（底部弹层） -->
+    <div class="ask-sheet-overlay hidden" id="ask-sheet-overlay"></div>
+    <div class="ask-sheet hidden" id="ask-sheet">
+        <div class="ask-sheet-header">
+            <h3 id="ask-sheet-title">问它</h3>
+            <button id="ask-sheet-close" type="button" class="close-btn" title="关闭" aria-label="关闭">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="ask-sheet-chips" id="ask-sheet-chips"></div>
+        <div class="ask-sheet-messages" id="ask-sheet-messages"></div>
+        <div class="ask-sheet-input">
+            <input id="ask-sheet-input" type="text" placeholder="问这个词…" autocomplete="off">
+            <button id="ask-sheet-send" type="button" class="btn-primary">发送</button>
+        </div>
+    </div>
+
     <script src="dictionary.js"></script>
     <script src="icons.js"></script>
     <script src="translator.js"></script>
+    <script src="askAgent.js"></script>
     <script src="fsrs.js"></script>
     <script src="app.js"></script>
 </body>
