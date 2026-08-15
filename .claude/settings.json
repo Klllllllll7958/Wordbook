@@ -29,7 +29,15 @@
       "Read(//c/Users/jpc79/Documents/obsidian/**)",
       "Read(//c/Users/jpc79/Documents/obsidian/英语/语法/**)",
       "Bash(node --check askAgent.js)",
-      "Bash(node --check app.js)"
+      "Bash(node --check app.js)",
+      "Bash(node tools/export_grammar.js)",
+      "Bash(node --check app/src/main/assets/grammar.js)",
+      "Bash(node -e \"const fs=require\\('fs'\\); eval\\(fs.readFileSync\\('./app/src/main/assets/grammar.js','utf8'\\)\\); console.log\\('虚拟语气:', matchGrammarSections\\('虚拟语气怎么判断'\\)\\); console.log\\('that从句:', matchGrammarSections\\('为什么用 that 从句'\\)\\); console.log\\('非谓语:', matchGrammarSections\\('这里为什么用过去分词'\\)\\); console.log\\('context长度:', buildGrammarContext\\('虚拟语气'\\).length\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); eval\\(fs.readFileSync\\('./app/src/main/assets/grammar.js','utf8'\\)\\); ['定语从句','名词性从句','句子成分','状语从句'].forEach\\(k=>{const s=GRAMMAR_SECTIONS.find\\(x=>x.key===k\\); console.log\\(k, '→ keywords:', s?s.keywords.join\\(' / '\\):'N/A'\\);}\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); eval\\(fs.readFileSync\\('./app/src/main/assets/grammar.js','utf8'\\)\\); console.log\\('虚拟语气:', matchGrammarSections\\('虚拟语气怎么判断'\\)\\); console.log\\('that从句:', matchGrammarSections\\('为什么用 that 从句'\\)\\); console.log\\('非谓语:', matchGrammarSections\\('这里为什么用过去分词'\\)\\); console.log\\('倒装:', matchGrammarSections\\('这个句子是不是倒装'\\)\\); console.log\\('context长度:', buildGrammarContext\\('虚拟语气'\\).length\\);\")",
+      "Bash(node --check grammar.js)",
+      "Bash(awk '{ print NR\": \"length\\($0\\)\" 字符\" }')",
+      "Bash(node -e \"const fs=require\\('fs'\\); eval\\(fs.readFileSync\\('./app/src/main/assets/grammar.js','utf8'\\)\\); console.log\\('章节数:', GRAMMAR_SECTIONS.length\\); console.log\\('虚拟语气:', matchGrammarSections\\('虚拟语气怎么判断'\\)\\); console.log\\('that从句:', matchGrammarSections\\('为什么用 that 从句'\\)\\); console.log\\('context长度:', buildGrammarContext\\('虚拟语气'\\).length\\);\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\jpc79\\Documents\\obsidian\\计算机\\wordbook"

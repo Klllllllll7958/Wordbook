@@ -6,27 +6,30 @@
 }
 
 :root {
-    /* ── 蓝色主题主色系 ── */
-    --primary-color: oklch(55% 0.18 255);
-    --primary-light: oklch(90% 0.04 255);
-    --primary-dark: oklch(38% 0.16 258);
+    /* ── 蓝色主题主色系（多邻国 Macaw 蓝 #1CB0F6） ── */
+    --primary-color: #1CB0F6;
+    --primary-light: #E0F7FE;
+    --primary-dark: #0284C7;
     /* ── 辅助色 ── */
     --secondary-color: #64748B;
-    --accent-color: oklch(60% 0.16 240);
-    --accent-light: oklch(88% 0.05 240);
-    --accent-dark: oklch(42% 0.16 245);
+    --accent-color: #0EA5E9;
+    --accent-light: #D6F2FD;
+    --accent-dark: #0284C7;
     /* ── 中性色（冷调灰蓝底） ── */
-    --background-color: #f4f6fa;
+    --background-color: #ffffff;
     --card-background: #ffffff;
     --text-primary: #1a1d28;
     --text-secondary: #64748B;
     --text-light: #94A3B8;
-    --border-color: #e2e8f0;
-    /* ── 蓝色调阴影 ── */
-    --shadow: 0 2px 8px rgba(30, 58, 138, 0.08);
-    --shadow-hover: 0 4px 16px rgba(30, 58, 138, 0.12);
+    --border-color: #e0e0e0;
+    /* ── 系统安全区（状态栏/刘海/底部手势条） ── */
+    --sb-top: env(safe-area-inset-top, 0px);
+    --sb-bottom: env(safe-area-inset-bottom, 0px);
+    /* ── 卡片阴影（对齐单词详情卡片的样式） ── */
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.16);
     /* ── 圆角 & 过渡 ── */
-    --border-radius: 16px;
+    --border-radius: 24px;
     --border-radius-sm: 8px;
     --transition: all 0.3s ease;
 }
@@ -39,6 +42,9 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    /* edge-to-edge 下内容会顶到屏幕最上/最下，给状态栏和手势条让位 */
+    padding-top: var(--sb-top);
+    padding-bottom: var(--sb-bottom);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -57,7 +63,7 @@ i.icon[data-icon] {
 /* 主内容区域 */
 .main-content {
     flex: 1;
-    padding: 24px;
+    padding: 0 24px;
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
@@ -152,6 +158,50 @@ i.icon[data-icon] {
     min-height: 60px;
 }
 
+/* 所有页面头部固定不动（position: fixed，全宽，分割线靠上） */
+#articles-section .section-header,
+#wordbook-section .section-header,
+#sentence-section .section-header,
+#article-detail-section .section-header,
+#word-detail-section .section-header,
+#sentence-detail-section .section-header,
+#settings-section .section-header,
+#review-section .section-header,
+#sentence-review-section .section-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background-color: var(--background-color);
+    margin: 0;
+    /* 头部背景延伸到状态栏下方（覆盖该区域），内容用安全区下移 */
+    padding: calc(10px + var(--sb-top)) 16px 12px;
+    border-bottom: 1px solid var(--border-color);
+    min-height: 0;
+}
+
+/* 固定头部的页面：内容区上下留出固定头/尾的空间 */
+#articles-section,
+#wordbook-section,
+#sentence-section,
+#article-detail-section,
+#word-detail-section,
+#sentence-detail-section,
+#settings-section,
+#review-section,
+#sentence-review-section {
+    padding-top: 84px;
+    padding-bottom: 104px;
+    margin-bottom: 0;
+}
+
+/* 复习页底部没有导航栏，去掉多余的底部留白 */
+#review-section,
+#sentence-review-section {
+    padding-bottom: 48px;
+}
+
 .back-btn {
     background: none;
     border: none;
@@ -199,7 +249,7 @@ i.icon[data-icon] {
 #article-input-section {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 80px); /* 减去底部导航栏高度 */
+    height: calc(100vh - 80px - var(--sb-top)); /* 减去底部导航栏高度 */
     margin-bottom: 0;
 }
 
@@ -237,7 +287,7 @@ i.icon[data-icon] {
 #word-selection-section {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 80px - var(--sb-top));
     margin-bottom: 0;
 }
 
@@ -265,18 +315,18 @@ i.icon[data-icon] {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.25);
+    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.25);
 }
 
 .btn-primary:hover {
     background-color: var(--primary-dark);
-    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.35);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
     transform: translateY(-1px);
 }
 
 .btn-primary:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.25);
+    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.25);
 }
 
 .btn-primary:disabled {
@@ -299,18 +349,18 @@ i.icon[data-icon] {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.2);
+    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
 }
 
 .btn-secondary:hover {
     background-color: var(--accent-dark);
-    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
     transform: translateY(-1px);
 }
 
 .btn-secondary:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.2);
+    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
 }
 
 /* 文章卡片列表 */
@@ -322,12 +372,12 @@ i.icon[data-icon] {
 
 .article-card {
     background-color: var(--card-background);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 24px;
     box-shadow: var(--shadow);
     transition: var(--transition);
     cursor: pointer;
-    border-left: 4px solid var(--primary-color);
     position: relative;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
@@ -337,7 +387,6 @@ i.icon[data-icon] {
 .article-card.long-press {
     animation: longPressAnimation 0.8s ease-in-out;
     background-color: #ffebee;
-    border-left-color: #c62828;
 }
 
 @keyframes longPressAnimation {
@@ -579,7 +628,7 @@ i.icon[data-icon] {
 }
 
 .wordbook-list-item:hover {
-    background-color: rgba(37, 99, 235, 0.05);
+    background-color: rgba(28, 176, 246, 0.05);
 }
 
 /* 长按动画效果 */
@@ -633,6 +682,7 @@ i.icon[data-icon] {
 
 .word-card {
     background-color: var(--card-background);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 28px;
     box-shadow: var(--shadow);
@@ -650,7 +700,7 @@ i.icon[data-icon] {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(37, 99, 235, 0.05);
+    background-color: rgba(28, 176, 246, 0.05);
     z-index: 0;
 }
 
@@ -717,7 +767,7 @@ i.icon[data-icon] {
     color: var(--text-secondary);
     line-height: 1.6;
     padding-right: 8px;
-    background: rgba(37, 99, 235, 0.05);
+    background: rgba(28, 176, 246, 0.05);
     padding: 12px;
     border-radius: var(--border-radius-sm);
     border-left: 3px solid var(--accent-light);
@@ -750,7 +800,7 @@ i.icon[data-icon] {
     border-color: var(--accent-color);
     color: var(--accent-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 4px 12px rgba(28, 176, 246, 0.15);
 }
 
 .word-card-btn:active {
@@ -869,7 +919,7 @@ textarea {
 textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.1);
     transform: translateY(-1px);
 }
 
@@ -887,7 +937,7 @@ input[type="text"], input[type="password"] {
 input[type="text"]:focus, input[type="password"]:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.1);
     transform: translateY(-1px);
 }
 
@@ -932,9 +982,9 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .word.selected {
-    color: oklch(38% 0.16 258);
+    color: #0284C7;
     font-weight: 700;
-    background-color: oklch(92% 0.04 255);         /* 蓝色背景，已选中 */
+    background-color: #E0F7FE;         /* 蓝色背景，已选中 */
     padding: 1px 2px;
     border-radius: 3px;
     box-shadow: none;
@@ -942,7 +992,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* 第一下点击 — 绿色文字标记（待确认） */
 .word.marked {
-    color: oklch(60% 0.18 240);
+    color: #0EA5E9;
     font-weight: 600;
     background: none;
 }
@@ -1019,7 +1069,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 .form-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.1);
     transform: translateY(-1px);
 }
 
@@ -1059,7 +1109,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 .api-status.success {
     color: var(--primary-color);
     border-left-color: var(--primary-color);
-    background-color: rgba(37, 99, 235, 0.1);
+    background-color: rgba(28, 176, 246, 0.1);
 }
 
 .api-status.error {
@@ -1071,7 +1121,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 .api-status.info {
     color: var(--accent-color);
     border-left-color: var(--accent-color);
-    background-color: rgba(33, 150, 243, 0.1);
+    background-color: rgba(28, 176, 246, 0.1);
 }
 
 @keyframes statusSuccess {
@@ -1216,7 +1266,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .btn-option:hover {
     border-color: var(--primary-color);
-    background-color: rgba(37, 99, 235, 0.05);
+    background-color: rgba(28, 176, 246, 0.05);
     transform: translateY(-2px);
 }
 
@@ -1315,6 +1365,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     align-items: center;
     padding: 16px 20px;
     background-color: var(--card-background);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     transition: var(--transition);
@@ -1347,9 +1398,12 @@ input[type="text"]:focus, input[type="password"]:focus {
 .footer {
     background-color: var(--card-background);
     border-top: 1px solid var(--border-color);
-    padding: 12px 0;
-    position: sticky;
+    /* 底部导航背景延伸到手势条下方，图标/文字用安全区上移 */
+    padding: 12px 0 calc(12px + var(--sb-bottom));
+    position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
     z-index: 90;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
@@ -1374,7 +1428,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     padding: 12px 20px;
     border-radius: var(--border-radius-sm);
     transition: var(--transition);
-    color: var(--text-secondary);
+    color: #64748B;
     min-width: 80px;
 }
 
@@ -1384,9 +1438,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .nav-item.active {
-    color: var(--primary-color);
-    font-weight: 600;
-    background-color: rgba(37, 99, 235, 0.1);
+    background-color: rgba(28, 176, 246, 0.1);
 }
 
 .nav-item span {
@@ -1398,11 +1450,6 @@ input[type="text"]:focus, input[type="password"]:focus {
     width: 24px;
     height: 24px;
     transition: var(--transition);
-}
-
-.nav-item.active svg {
-    stroke: var(--primary-color);
-    transform: scale(1.1);
 }
 
 /* 隐藏类 */
@@ -1423,7 +1470,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 /* 响应式设计 */
 @media (max-width: 768px) {
     .main-content {
-        padding: 16px;
+        padding: 0 16px;
     }
     
     .section {
@@ -1721,15 +1768,15 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* 困难 — 蓝色 */
 .rating-hard {
-    background-color: oklch(96% 0.012 255);
-    color: oklch(38% 0.16 258);
-    border: 1px solid oklch(80% 0.12 255);
+    background-color: #E0F7FE;
+    color: #0284C7;
+    border: 1px solid #7DD3FC;
 }
 .rating-hard:hover {
-    background-color: oklch(90% 0.04 255);
+    background-color: #E0F7FE;
 }
 .rating-hard:active {
-    background-color: oklch(80% 0.12 255);
+    background-color: #7DD3FC;
 }
 
 /* 正常 — 绿色 */
@@ -1781,13 +1828,13 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .review-sentence-translation {
     color: var(--text-secondary, #666);
-    border-left-color: oklch(55% 0.18 255);
+    border-left-color: #1CB0F6;
 }
 
 /* 句子中目标单词/释义的高亮 */
 .sentence-highlight {
     font-weight: 700;
-    background-color: oklch(55% 0.18 255 / 0.2);
+    background-color: rgba(28, 176, 246, 0.2);
     color: var(--accent-color);
     padding: 2px 6px;
     border-radius: 4px;
@@ -1814,13 +1861,13 @@ input[type="text"]:focus, input[type="password"]:focus {
     color: var(--text-secondary);
     background-color: var(--card-background);
     padding: 24px;
-    border-radius: 12px;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     white-space: pre-wrap;
 }
 
 .article-original .highlighted-word {
-    background-color: rgba(37, 99, 235, 0.2);
+    background-color: rgba(28, 176, 246, 0.2);
     padding: 2px 4px;
     border-radius: 4px;
     font-weight: 500;
@@ -1878,14 +1925,15 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .article-original {
     background: white;
+    border: 1px solid var(--border-color);
     padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
     line-height: 1.6;
 }
 
 .highlighted-word {
-    background-color: oklch(55% 0.18 255);
+    background-color: #1CB0F6;
     color: white;
     padding: 2px 6px;
     border-radius: 4px;
@@ -1906,7 +1954,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     min-height: 220px;
     cursor: pointer;
     position: relative;
-    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    background: linear-gradient(135deg, #1CB0F6 0%, #0EA5E9 100%);
     border-radius: 20px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
     padding: 28px;
@@ -1931,12 +1979,12 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .word-card.show-meaning {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border: 2px solid #3b82f6;
-    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
+    border: 2px solid #1CB0F6;
+    box-shadow: 0 8px 24px rgba(28, 176, 246, 0.2);
 }
 
 .word-card.show-meaning::before {
-    background: linear-gradient(45deg, rgba(37, 99, 235, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+    background: linear-gradient(45deg, rgba(28, 176, 246, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
 }
 
 .word-card-content {
@@ -1989,12 +2037,12 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .word-card.show-meaning .word-card-meaning {
     color: var(--text-primary);
-    background: rgba(37, 99, 235, 0.08);
-    border-left: 4px solid #3b82f6;
+    background: rgba(28, 176, 246, 0.08);
+    border-left: 4px solid #1CB0F6;
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 4px 12px rgba(28, 176, 246, 0.1);
 }
 
 .word-navigation {
@@ -2012,7 +2060,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     padding: 12px 20px;
     border: none;
     border-radius: 8px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    background: linear-gradient(135deg, #1CB0F6 0%, #0EA5E9 100%);
     color: white;
     font-size: 16px;
     font-weight: 500;
@@ -2022,7 +2070,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .nav-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(28, 176, 246, 0.3);
 }
 
 .nav-btn:active {
@@ -2082,13 +2130,13 @@ input[type="text"]:focus, input[type="password"]:focus {
     right: 20px;
     z-index: 999;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #3b82f6, #1e40af);
+    background: linear-gradient(135deg, #1CB0F6, #0EA5E9);
     color: white;
     border: none;
     border-radius: 24px;
     font-size: 14px;
     font-weight: 600;
-    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 4px 16px rgba(28, 176, 246, 0.4);
     cursor: pointer;
     transition: transform 0.2s ease;
 }
@@ -2108,9 +2156,10 @@ input[type="text"]:focus, input[type="password"]:focus {
     gap: 8px;
     padding: 16px;
     background: white;
-    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
     margin-bottom: 10px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    box-shadow: var(--shadow);
     cursor: pointer;
     transition: all 0.2s ease;
     user-select: none;
@@ -2149,10 +2198,10 @@ input[type="text"]:focus, input[type="password"]:focus {
     line-height: 1.9;
     color: var(--text-primary);
     background: #fff;
+    border: 1px solid var(--border-color);
     padding: 16px;
-    border-radius: 12px;
+    border-radius: var(--border-radius);
     margin-bottom: 16px;
-    border-left: 3px solid #3b82f6;
 }
 
 .sentence-detail-label {
@@ -2205,7 +2254,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 /* 9 种语法类型均用 bg≈96% / text≈38% / border≈72% 的同一结构，仅色相不同 */
 
 /* 主干 (Blue — 主题蓝) */
-.sentence-segment.type-main { background: oklch(96% 0.012 255); color: oklch(38% 0.16 258); border-bottom: 2px solid oklch(55% 0.18 255); }
+.sentence-segment.type-main { background: #E0F7FE; color: #0284C7; border-bottom: 2px solid #1CB0F6; }
 
 /* 名词性从句 (Teal — 青蓝) */
 .sentence-segment.type-that-object     { background: oklch(96% 0.015 200); color: oklch(38% 0.14 205); border-bottom: 2px solid oklch(72% 0.14 200); }
@@ -2224,6 +2273,11 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* 兜底 (Warm Gray) */
 .sentence-segment.type-other-clause { background: oklch(97% 0.005 90); color: oklch(45% 0.02 80); border-bottom: 2px solid oklch(75% 0.02 85); }
+
+/* 结构解析标注：去掉背景色，仅用下划线 + 文字色区分从句类型 */
+.sentence-segment[class*="type-"] {
+    background: transparent;
+}
 
 /* ---- 颜色图例 ---- */
 .sentence-legend {
@@ -2247,7 +2301,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     border-radius: 3px;
     flex-shrink: 0;
 }
-.sentence-legend-swatch.sw-main             { background: oklch(96% 0.012 255); border-bottom: 2px solid oklch(55% 0.18 255); }
+.sentence-legend-swatch.sw-main             { background: #E0F7FE; border-bottom: 2px solid #1CB0F6; }
 .sentence-legend-swatch.sw-that-object      { background: oklch(96% 0.015 200); border-bottom: 2px solid oklch(72% 0.14 200); }
 .sentence-legend-swatch.sw-embedded-object  { background: oklch(94% 0.025 195); border-bottom: 2px solid oklch(65% 0.16 195); }
 .sentence-legend-swatch.sw-which-relative   { background: oklch(96% 0.018 65);  border-bottom: 2px solid oklch(75% 0.16 60);  }
@@ -2362,7 +2416,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .stat-good {
-    background: oklch(96% 0.012 255);
+    background: #E0F7FE;
 }
 
 .stat-hard {
@@ -2379,7 +2433,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     line-height: 1;
 }
 
-.stat-good .stat-num { color: oklch(38% 0.16 258); }
+.stat-good .stat-num { color: #0284C7; }
 .stat-hard .stat-num { color: #e65100; }
 .stat-again .stat-num { color: #c62828; }
 
@@ -2416,6 +2470,49 @@ input[type="text"]:focus, input[type="password"]:focus {
     justify-content: center;
 }
 
+/* 详情页词汇卡片：可点击进入问它 + 动效 */
+#word-detail-card {
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, opacity 0.3s ease;
+}
+
+#word-detail-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+}
+
+#word-detail-card:active {
+    transform: translateY(-1px) scale(0.97);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 弹层打开时卡片轻微上浮缩小，营造纵深让位 */
+#word-detail-card.ask-float {
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0.85;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* 长句详情卡：可点击进入长句问它 + 动效 */
+.sentence-detail-original {
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, opacity 0.3s ease;
+}
+
+.sentence-detail-original:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.sentence-detail-original:active {
+    transform: scale(0.98);
+}
+
+.sentence-detail-original.ask-float {
+    transform: translateY(-16px) scale(0.97);
+    opacity: 0.88;
+}
+
 /* 底部弹层遮罩 */
 .ask-sheet-overlay {
     position: fixed;
@@ -2427,35 +2524,43 @@ input[type="text"]:focus, input[type="password"]:focus {
     z-index: 210;
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease-out;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+
+.ask-sheet-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .ask-sheet {
     position: fixed;
-    left: 50%;
-    bottom: 0;
-    transform: translateX(-50%);
+    top: 0;
+    left: 0;
     width: 100%;
-    max-width: 600px;
-    height: 72vh;
-    max-height: 560px;
+    height: 100vh;
+    height: 100dvh;
     background-color: var(--background-color);
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
     z-index: 211;
     display: flex;
     flex-direction: column;
-    animation: slideUp 0.3s ease-out;
+    transform: translateY(100%);
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+.ask-sheet.show {
+    transform: translateY(0);
 }
 
 .ask-sheet-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
+    padding: 40px 20px 16px; /* 顶部留白避开系统状态栏 */
     background-color: var(--primary-color);
     color: white;
-    border-radius: 20px 20px 0 0;
     flex-shrink: 0;
 }
 
@@ -2464,6 +2569,11 @@ input[type="text"]:focus, input[type="password"]:focus {
     font-weight: 600;
     margin: 0;
     color: white;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .ask-sheet-chips {

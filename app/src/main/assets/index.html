@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>单词本</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -504,8 +504,8 @@
     </footer>
 
     <!-- 问它提问面板（底部弹层） -->
-    <div class="ask-sheet-overlay hidden" id="ask-sheet-overlay"></div>
-    <div class="ask-sheet hidden" id="ask-sheet">
+    <div class="ask-sheet-overlay" id="ask-sheet-overlay"></div>
+    <div class="ask-sheet" id="ask-sheet">
         <div class="ask-sheet-header">
             <h3 id="ask-sheet-title">问它</h3>
             <button id="ask-sheet-close" type="button" class="close-btn" title="关闭" aria-label="关闭">
@@ -522,9 +522,29 @@
         </div>
     </div>
 
+    <!-- 长句问它提问面板（底部弹层） -->
+    <div class="ask-sheet-overlay" id="sentence-ask-overlay"></div>
+    <div class="ask-sheet" id="sentence-ask-sheet">
+        <div class="ask-sheet-header">
+            <h3 id="sentence-ask-title">长句</h3>
+            <button id="sentence-ask-close" type="button" class="close-btn" title="关闭" aria-label="关闭">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="ask-sheet-chips" id="sentence-ask-chips"></div>
+        <div class="ask-sheet-messages" id="sentence-ask-messages"></div>
+        <div class="ask-sheet-input">
+            <input id="sentence-ask-input" type="text" placeholder="问这句话…" autocomplete="off">
+            <button id="sentence-ask-send" type="button" class="btn-primary">发送</button>
+        </div>
+    </div>
+
     <script src="dictionary.js"></script>
     <script src="icons.js"></script>
     <script src="translator.js"></script>
+    <script src="grammar.js"></script>
     <script src="askAgent.js"></script>
     <script src="fsrs.js"></script>
     <script src="app.js"></script>

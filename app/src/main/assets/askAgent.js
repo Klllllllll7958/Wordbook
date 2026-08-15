@@ -23,6 +23,24 @@ class AskAgent {
         return parts.join('\n');
     }
 
+    // 组装长句语境（全本地免费，预填进首轮 prompt）
+    buildSentenceContext(sentenceInfo, question, articleText) {
+        if (!sentenceInfo) return '';
+        var parts = [];
+        if (sentenceInfo.sentence) parts.push('【原句】' + sentenceInfo.sentence);
+        if (sentenceInfo.translation) parts.push('【中文翻译】' + sentenceInfo.translation);
+        if (sentenceInfo.segments && sentenceInfo.segments.length) {
+            parts.push('【结构解析】' + JSON.stringify(sentenceInfo.segments));
+        }
+        if (sentenceInfo.breakdown) parts.push('【逐层拆解】' + sentenceInfo.breakdown);
+        var grammar = (typeof window !== 'undefined' && window.Grammar)
+            ? window.Grammar.buildGrammarContext(question)
+            : '';
+        if (grammar) parts.push('【语法参考】\n' + grammar);
+        if (articleText) parts.push('【原文段落】\n' + articleText);
+        return parts.join('\n\n');
+    }
+
     // system prompt：四类口径 + 内容红线 + 输出格式
     _systemPrompt() {
         return `你是考研英语单词辅导老师。用户就当前卡片上的单词或句子提出开放问题，你要结合给出的卡片语境回答。回答严格限定在当前词/句语境，不做与学习无关的自由对话。

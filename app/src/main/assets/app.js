@@ -44,6 +44,13 @@ class WordbookApp {
         this.askMessages = [];      // 完整对话历史（不含 system）
         this.askCurrentWord = null; // 当前详情页单词
         this.askLoadingEl = null;   // 加载态气泡元素
+        this.isAskOpen = false;     // 弹层是否打开（用于返回键层级）
+
+        // 长句问它状态
+        this.sentenceAskMessages = [];      // 完整对话历史（不含 system）
+        this.sentenceAskCurrent = null;     // 当前长句 item
+        this.sentenceAskLoadingEl = null;   // 加载态气泡元素
+        this.isSentenceAskOpen = false;     // 长句弹层是否打开
 
         // DOM 元素
         this.articleTitleInput = document.getElementById('article-title-input');
@@ -165,6 +172,16 @@ class WordbookApp {
         this.askSheetInput = document.getElementById('ask-sheet-input');
         this.askSheetSend = document.getElementById('ask-sheet-send');
 
+        // 长句问它相关DOM元素
+        this.sentenceAskOverlay = document.getElementById('sentence-ask-overlay');
+        this.sentenceAskSheet = document.getElementById('sentence-ask-sheet');
+        this.sentenceAskTitle = document.getElementById('sentence-ask-title');
+        this.sentenceAskClose = document.getElementById('sentence-ask-close');
+        this.sentenceAskChips = document.getElementById('sentence-ask-chips');
+        this.sentenceAskSheetMessages = document.getElementById('sentence-ask-messages');
+        this.sentenceAskInput = document.getElementById('sentence-ask-input');
+        this.sentenceAskSend = document.getElementById('sentence-ask-send');
+
         // API配置相关DOM元素
         this.apiKeyInput = document.getElementById('apikey-input');
         this.saveApiBtn = document.getElementById('save-api-btn');
@@ -209,7 +226,24 @@ class WordbookApp {
     // 设置popstate事件监听器，处理返回键导航
     setupPopStateListener() {
         window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.page) {
+            var page = event.state && event.state.page;
+
+            // 从单词问它弹层退回详情页
+            if (page === 'word-detail') {
+                this.closeAskSheet();
+                return;
+            }
+            // 从长句问它弹层退回长句详情
+            if (page === 'sentence-detail') {
+                this.closeSentenceAsk();
+                return;
+            }
+
+            // 关闭可能残留的弹层（幂等）
+            this.closeAskSheet();
+            this.closeSentenceAsk();
+
+            if (page) {
                 // 清除二级页面状态
                 this.currentArticle = null;
                 this.currentWordIndex = 0;
@@ -229,7 +263,7 @@ class WordbookApp {
                 this.wordSelectionSection.classList.add('hidden');
 
                 // 恢复历史状态中保存的页面
-                this.showPage(event.state.page);
+                this.showPage(page);
             }
             // event.state 为 null 时不做处理，让 Android 系统处理返回（退出应用）
         });
@@ -345,14 +379,27 @@ class WordbookApp {
         this.backFromWordDetailBtn.addEventListener('click', () => this.closeWordDetail());
 
         // 问它事件
+        this.wordDetailCard.addEventListener('click', () => this.openAskSheet());
         this.askItBtn.addEventListener('click', () => this.openAskSheet());
-        this.askSheetClose.addEventListener('click', () => this.closeAskSheet());
-        this.askSheetOverlay.addEventListener('click', () => this.closeAskSheet());
+        this.askSheetClose.addEventListener('click', () => this.dismissAskSheet());
+        this.askSheetOverlay.addEventListener('click', () => this.dismissAskSheet());
         this.askSheetSend.addEventListener('click', () => this.submitAsk());
         this.askSheetInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 this.submitAsk();
+            }
+        });
+
+        // 长句问它事件
+        this.sentenceDetailOriginal.addEventListener('click', () => this.openSentenceAsk());
+        this.sentenceAskClose.addEventListener('click', () => this.dismissSentenceAsk());
+        this.sentenceAskOverlay.addEventListener('click', () => this.dismissSentenceAsk());
+        this.sentenceAskSend.addEventListener('click', () => this.submitSentenceAsk());
+        this.sentenceAskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.submitSentenceAsk();
             }
         });
         this.sentenceReviewRatings.querySelectorAll('.rating-btn').forEach(btn => {
@@ -1286,10 +1333,12 @@ class WordbookApp {
         this.askMessages = [];
         this.askCurrentWord = word;
         this.clearAskMessages();
+        this.closeAskSheet();
     }
 
     // 关闭单词详情页
     closeWordDetail() {
+        this.dismissAskSheet();
         this.wordDetailSection.classList.add('hidden');
         history.back();
     }
@@ -1299,17 +1348,36 @@ class WordbookApp {
     // 打开问它面板
     openAskSheet() {
         if (!this.askCurrentWord) return;
-        this.askSheetTitle.textContent = '问它：' + this.askCurrentWord;
+        var wordInfo = this.getCurrentAskWordInfo();
+        var meaning = wordInfo && wordInfo.meaning ? wordInfo.meaning : '';
+        this.askSheetTitle.textContent = meaning
+            ? (this.askCurrentWord + '：' + meaning)
+            : this.askCurrentWord;
         this.renderAskChips();
         this.askSheetInput.value = '';
-        this.askSheetOverlay.classList.remove('hidden');
-        this.askSheet.classList.remove('hidden');
+        this.askSheetOverlay.classList.add('show');
+        this.askSheet.classList.add('show');
+        if (this.wordDetailCard) this.wordDetailCard.classList.add('ask-float');
+        if (!this.isAskOpen) {
+            this.isAskOpen = true;
+            history.pushState({ page: 'word-detail-ask' }, '');
+        }
     }
 
-    // 关闭问它面板（保留对话）
+    // 关闭问它面板（仅 UI，不动 history；供 popstate 与内部使用）
     closeAskSheet() {
-        this.askSheetOverlay.classList.add('hidden');
-        this.askSheet.classList.add('hidden');
+        this.isAskOpen = false;
+        this.askSheetOverlay.classList.remove('show');
+        this.askSheet.classList.remove('show');
+        if (this.wordDetailCard) this.wordDetailCard.classList.remove('ask-float');
+    }
+
+    // 主动关闭（X / 遮罩点击）：关 UI 并弹出历史栈
+    dismissAskSheet() {
+        if (this.isAskOpen) {
+            this.closeAskSheet();
+            history.back();
+        }
     }
 
     // 渲染快捷问题 chips
@@ -2612,12 +2680,162 @@ class WordbookApp {
         document.querySelector('.footer').classList.add('hidden');
         this.sentenceDetailSection.classList.remove('hidden');
         history.pushState({ page: 'sentence-detail' }, '', '');
+
+        // 重置长句问它会话
+        this.sentenceAskMessages = [];
+        this.sentenceAskCurrent = item;
+        this.clearSentenceAskMessages();
+        this.closeSentenceAsk();
     }
 
     // 关闭长句详情
     closeSentenceDetail() {
+        this.dismissSentenceAsk();
         this.sentenceDetailSection.classList.add('hidden');
         history.back();
+    }
+
+    // ========== 长句问它功能 ==========
+
+    // 打开长句问它面板
+    openSentenceAsk() {
+        if (!this.sentenceAskCurrent) return;
+        this.sentenceAskTitle.textContent = '长句';
+        this.renderSentenceAskChips();
+        this.sentenceAskInput.value = '';
+        this.sentenceAskOverlay.classList.add('show');
+        this.sentenceAskSheet.classList.add('show');
+        if (this.sentenceDetailOriginal) this.sentenceDetailOriginal.classList.add('ask-float');
+        if (!this.isSentenceAskOpen) {
+            this.isSentenceAskOpen = true;
+            history.pushState({ page: 'sentence-detail-ask' }, '');
+        }
+    }
+
+    // 关闭长句问它面板（仅 UI，不动 history）
+    closeSentenceAsk() {
+        this.isSentenceAskOpen = false;
+        this.sentenceAskOverlay.classList.remove('show');
+        this.sentenceAskSheet.classList.remove('show');
+        if (this.sentenceDetailOriginal) this.sentenceDetailOriginal.classList.remove('ask-float');
+    }
+
+    // 主动关闭（X / 遮罩点击）：关 UI 并弹出历史栈
+    dismissSentenceAsk() {
+        if (this.isSentenceAskOpen) {
+            this.closeSentenceAsk();
+            history.back();
+        }
+    }
+
+    // 渲染长句快捷 chips
+    renderSentenceAskChips() {
+        var chips = ['这句话怎么拆解？', '为什么用这个时态/语气？', '这里 it/它 指什么？'];
+        var self = this;
+        this.sentenceAskChips.innerHTML = '';
+        chips.forEach(function(text) {
+            var chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'ask-chip';
+            chip.textContent = text;
+            chip.addEventListener('click', function() { self.askSentenceQuestion(text); });
+            self.sentenceAskChips.appendChild(chip);
+        });
+    }
+
+    // 三级策略：按问题特征定位原文段落 / 全文
+    getSentenceArticleText(sentenceInfo, question) {
+        if (!sentenceInfo || !question) return '';
+        var needParagraph = /指代|指什么|前文|上下文|逻辑|为什么用\s*(however|while)/.test(question);
+        var needFull = /全文|整篇/.test(question);
+        if (!needParagraph && !needFull) return '';
+        var article = this.articles.find(function(a) { return a.title === sentenceInfo.source; });
+        if (!article || !article.content) return '';
+        if (needFull) return article.content;
+        var idx = article.content.indexOf(sentenceInfo.sentence);
+        if (idx === -1) return ''; // 定位失败降级
+        var start = article.content.lastIndexOf('\n\n', idx);
+        start = start === -1 ? 0 : start + 2;
+        var end = article.content.indexOf('\n\n', idx + sentenceInfo.sentence.length);
+        end = end === -1 ? article.content.length : end;
+        return article.content.substring(start, end);
+    }
+
+    // 提交输入框问题
+    submitSentenceAsk() {
+        var text = this.sentenceAskInput.value.trim();
+        if (!text) return;
+        this.sentenceAskInput.value = '';
+        this.askSentenceQuestion(text);
+    }
+
+    // 发起一次长句提问
+    async askSentenceQuestion(question) {
+        if (!this.sentenceAskCurrent) return;
+        var item = this.sentenceAskCurrent;
+
+        var userContent;
+        if (this.sentenceAskMessages.length === 0) {
+            var articleText = this.getSentenceArticleText(item, question);
+            userContent = window.askAgent.buildSentenceContext(item, question, articleText) + '\n\n【问题】' + question;
+        } else {
+            userContent = question;
+        }
+        this.sentenceAskMessages.push({ role: 'user', content: userContent });
+
+        this.renderSentenceAskMessage('user', question);
+        this.showSentenceAskLoading();
+
+        try {
+            var answer = await window.askAgent.ask(this.sentenceAskMessages);
+            this.sentenceAskMessages.push({ role: 'assistant', content: answer });
+            this.hideSentenceAskLoading();
+            this.renderSentenceAskMessage('assistant', answer);
+        } catch (error) {
+            this.hideSentenceAskLoading();
+            this.sentenceAskMessages.pop();
+            this.renderSentenceAskMessage('error', error.message || '请求失败，请重试');
+        }
+    }
+
+    // 渲染一条长句消息气泡
+    renderSentenceAskMessage(role, content) {
+        var bubble = document.createElement('div');
+        if (role === 'user') {
+            bubble.className = 'ask-bubble ask-bubble-user';
+            bubble.textContent = content;
+        } else if (role === 'assistant') {
+            bubble.className = 'ask-bubble ask-bubble-ai';
+            bubble.innerHTML = this.renderAskMarkdown(content);
+        } else {
+            bubble.className = 'ask-bubble ask-bubble-error';
+            bubble.textContent = content;
+        }
+        this.sentenceAskSheetMessages.appendChild(bubble);
+        this.sentenceAskSheetMessages.scrollTop = this.sentenceAskSheetMessages.scrollHeight;
+    }
+
+    // 显示加载态
+    showSentenceAskLoading() {
+        this.sentenceAskLoadingEl = document.createElement('div');
+        this.sentenceAskLoadingEl.className = 'ask-bubble ask-bubble-ai ask-bubble-loading';
+        this.sentenceAskLoadingEl.textContent = 'AI 思考中…';
+        this.sentenceAskSheetMessages.appendChild(this.sentenceAskLoadingEl);
+        this.sentenceAskSheetMessages.scrollTop = this.sentenceAskSheetMessages.scrollHeight;
+    }
+
+    // 隐藏加载态
+    hideSentenceAskLoading() {
+        if (this.sentenceAskLoadingEl && this.sentenceAskLoadingEl.parentNode) {
+            this.sentenceAskLoadingEl.parentNode.removeChild(this.sentenceAskLoadingEl);
+        }
+        this.sentenceAskLoadingEl = null;
+    }
+
+    // 清空长句消息列表
+    clearSentenceAskMessages() {
+        this.sentenceAskSheetMessages.innerHTML = '';
+        this.sentenceAskLoadingEl = null;
     }
 
     // 将 segments 数组渲染为彩色标注 HTML
@@ -3040,6 +3258,16 @@ class WordbookApp {
     // 处理 Android 系统返回键，返回字符串告知 Android 当前状态
     onBackPressed() {
         try {
+            // 优先关闭问它弹层（最高优先级）
+            if (this.isAskOpen) {
+                this.dismissAskSheet();
+                return 'modal';
+            }
+            // 优先关闭长句问它弹层
+            if (this.isSentenceAskOpen) {
+                this.dismissSentenceAsk();
+                return 'modal';
+            }
             // 优先关闭当前可见的二级页面 / 模态框
             if (!this.reviewSection.classList.contains('hidden')) {
                 this.backFromReview();
@@ -3140,7 +3368,19 @@ class WordbookApp {
 }
 
 // 初始化应用
+// 兼容旧 WebView：env(safe-area-inset-top) 可能解析为 0，但状态栏实际遮住了页面顶部，
+// 此时用 visualViewport 实测顶部偏移兜底，写入 CSS 变量让所有布局统一让位。
+function applySafeAreaInset() {
+    const root = document.documentElement;
+    const computed = getComputedStyle(root).getPropertyValue('--sb-top').trim();
+    if (parseFloat(computed) === 0 && window.visualViewport && window.visualViewport.offsetTop > 0) {
+        root.style.setProperty('--sb-top', window.visualViewport.offsetTop + 'px');
+    }
+}
+window.addEventListener('resize', applySafeAreaInset);
+
 document.addEventListener('DOMContentLoaded', () => {
+    applySafeAreaInset();
     Icon.mount();
     window.app = new WordbookApp();
 });
