@@ -1059,6 +1059,12 @@ class WordbookApp {
 
     // 渲染文章列表
     renderArticles() {
+        // 更新文章计数
+        const articlesCount = document.getElementById('articles-count');
+        if (articlesCount) {
+            articlesCount.textContent = `共有${this.articles.length}篇文章`;
+        }
+
         if (this.articles.length === 0) {
             this.articlesList.innerHTML = '<div class="empty-state">还没有文章，请添加文章</div>';
             return;

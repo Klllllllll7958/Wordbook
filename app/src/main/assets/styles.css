@@ -28,6 +28,8 @@
     /* ── 卡片阴影（对齐单词详情卡片的样式） ── */
     --shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.16);
+    /* 列表卡片柔和阴影（单词/长句列表使用） */
+    --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.06);
     /* ── 圆角 & 过渡 ── */
     --border-radius: 24px;
     --border-radius-sm: 8px;
@@ -154,7 +156,7 @@ i.icon[data-icon] {
     align-items: flex-start;
     margin-bottom: 20px;
     padding: 20px 0 12px 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 0.5px solid #f0f0f0;
     min-height: 60px;
 }
 
@@ -177,7 +179,7 @@ i.icon[data-icon] {
     margin: 0;
     /* 头部背景延伸到状态栏下方（覆盖该区域），内容用安全区下移 */
     padding: calc(10px + var(--sb-top)) 16px 12px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 0.5px solid #f0f0f0;
     min-height: 0;
 }
 
@@ -194,6 +196,13 @@ i.icon[data-icon] {
     padding-top: 84px;
     padding-bottom: 104px;
     margin-bottom: 0;
+}
+
+/* 列表页（文章/单词/长句）首个卡片与页头保持一定间隔 */
+#articles-section,
+#wordbook-section,
+#sentence-section {
+    padding-top: 104px;
 }
 
 /* 复习页底部没有导航栏，去掉多余的底部留白 */
@@ -221,6 +230,64 @@ i.icon[data-icon] {
 
 .back-btn svg {
     stroke: var(--text-primary);
+}
+
+/* 详情/复习页头部：标题居中、无蓝色竖线、返回按钮白色圆底带阴影、分割线更浅 */
+#word-detail-section .section-header,
+#sentence-detail-section .section-header,
+#review-section .section-header,
+#sentence-review-section .section-header,
+#article-detail-section .section-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    /* 页头略微上移 */
+    padding-top: calc(4px + var(--sb-top));
+}
+
+#word-detail-section .section-header .back-btn,
+#sentence-detail-section .section-header .back-btn,
+#review-section .section-header .back-btn,
+#sentence-review-section .section-header .back-btn,
+#article-detail-section .section-header .back-btn {
+    justify-self: start;
+    background: #ffffff;
+    box-shadow: var(--shadow-soft);
+}
+
+#word-detail-section .section-header h2,
+#sentence-detail-section .section-header h2,
+#review-section .section-header h2,
+#sentence-review-section .section-header h2,
+#article-detail-section .section-header h2 {
+    justify-self: center;
+    text-align: center;
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+#word-detail-section .section-header h2::before,
+#sentence-detail-section .section-header h2::before,
+#review-section .section-header h2::before,
+#sentence-review-section .section-header h2::before,
+#article-detail-section .section-header h2::before {
+    display: none;
+}
+
+#word-detail-section .section-header > :last-child,
+#sentence-detail-section .section-header > :last-child,
+#review-section .section-header > :last-child,
+#sentence-review-section .section-header > :last-child,
+#article-detail-section .section-header > :last-child {
+    justify-self: end;
+}
+
+#word-detail-section .section-header .back-btn:hover,
+#sentence-detail-section .section-header .back-btn:hover,
+#review-section .section-header .back-btn:hover,
+#sentence-review-section .section-header .back-btn:hover,
+#article-detail-section .section-header .back-btn:hover {
+    background: #f5f5f5;
 }
 
 .section-header h2 {
@@ -611,24 +678,27 @@ i.icon[data-icon] {
 
 .wordbook-list {
     padding: 0;
-    max-height: calc(100vh - 200px);
-    overflow-y: auto;
 }
 
 .wordbook-list-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color);
-    transition: all 0.3s ease;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-soft);
     cursor: pointer;
+    transition: all 0.2s ease;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
 
-.wordbook-list-item:hover {
-    background-color: rgba(28, 176, 246, 0.05);
+.wordbook-list-item:active {
+    transform: scale(0.98);
+    background: #f5f5f5;
 }
 
 /* 长按动画效果 */
@@ -658,26 +728,7 @@ i.icon[data-icon] {
 .wordbook-list-item .meaning {
     font-size: 14px;
     color: var(--text-secondary);
-    text-align: right;
-    max-width: 50%;
-}
-
-/* 滚动条样式 */
-.wordbook-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.wordbook-list::-webkit-scrollbar-track {
-    background: var(--background-color);
-}
-
-.wordbook-list::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
-}
-
-.wordbook-list::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-color);
+    line-height: 1.5;
 }
 
 .word-card {
@@ -2159,7 +2210,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     margin-bottom: 10px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-soft);
     cursor: pointer;
     transition: all 0.2s ease;
     user-select: none;
