@@ -37,10 +37,31 @@
       "Bash(node -e \"const fs=require\\('fs'\\); eval\\(fs.readFileSync\\('./app/src/main/assets/grammar.js','utf8'\\)\\); console.log\\('虚拟语气:', matchGrammarSections\\('虚拟语气怎么判断'\\)\\); console.log\\('that从句:', matchGrammarSections\\('为什么用 that 从句'\\)\\); console.log\\('非谓语:', matchGrammarSections\\('这里为什么用过去分词'\\)\\); console.log\\('倒装:', matchGrammarSections\\('这个句子是不是倒装'\\)\\); console.log\\('context长度:', buildGrammarContext\\('虚拟语气'\\).length\\);\")",
       "Bash(node --check grammar.js)",
       "Bash(awk '{ print NR\": \"length\\($0\\)\" 字符\" }')",
-      "Bash(node -e \"const fs=require\\('fs'\\); eval\\(fs.readFileSync\\('./app/src/main/assets/grammar.js','utf8'\\)\\); console.log\\('章节数:', GRAMMAR_SECTIONS.length\\); console.log\\('虚拟语气:', matchGrammarSections\\('虚拟语气怎么判断'\\)\\); console.log\\('that从句:', matchGrammarSections\\('为什么用 that 从句'\\)\\); console.log\\('context长度:', buildGrammarContext\\('虚拟语气'\\).length\\);\")"
+      "Bash(node -e \"const fs=require\\('fs'\\); eval\\(fs.readFileSync\\('./app/src/main/assets/grammar.js','utf8'\\)\\); console.log\\('章节数:', GRAMMAR_SECTIONS.length\\); console.log\\('虚拟语气:', matchGrammarSections\\('虚拟语气怎么判断'\\)\\); console.log\\('that从句:', matchGrammarSections\\('为什么用 that 从句'\\)\\); console.log\\('context长度:', buildGrammarContext\\('虚拟语气'\\).length\\);\")",
+      "Bash(node --check \"c:/Users/jpc79/AndroidStudioProjects/Wordbook/app/src/main/assets/app.js\")",
+      "Bash(node --check \"c:/Users/jpc79/AndroidStudioProjects/Wordbook/app/src/main/assets/askAgent.js\")",
+      "Bash(ls -la \"c:/Users/jpc79/.claude/skills/\" 2>/dev/null)",
+      "Bash(ls -la \"c:/Users/jpc79/.claude/skills/vision/\")",
+      "Read(//c/Users/jpc79/.claude/skills/vision/**)",
+      "Bash(find \"c:/Users/jpc79/AppData/Local/Temp\" -type f -newermt \"2026-08-17 19:00\" \\\\\\( -iname \"*.png\" -o -iname \"*.jpg\" -o -iname \"*.jpeg\" \\\\\\) 2>/dev/null | head -30; echo \"===home temp===\"; find \"c:/Users/jpc79\" -maxdepth 4 -type f -newermt \"2026-08-17 19:00\" \\\\\\( -iname \"*.png\" -o -iname \"*.jpg\" -o -iname \"*.jpeg\" -o -iname \"*.webp\" \\\\\\) 2>/dev/null | grep -viE \"AppData/Local/Packages|\\\\.gradle|\\\\.cache|node_modules|\\\\.android\" | head -30)",
+      "Read(//c/Users/jpc79/AppData/Local/Temp/**)",
+      "Bash(node \"C:/Users/jpc79/.claude/skills/vision/vision.js\" \"C:/Users/jpc79/Desktop/Screenshot_2026-08-17-20-10-33-925_com.bytedance..jpg\" \"请仔细描述这张手机截图底部的导航栏/标签栏：1\\) 有几个选项，文字分别是什么？2\\) 每个选项上面是否有图标？图标长什么样？3\\) 选中的选项是什么样式（背景颜色、文字颜色、是否有高亮）？4\\) 未选中的选项是什么样式？5\\) 整个导航栏的背景颜色和圆角是什么？6\\) 导航栏与内容区之间是否有分隔线或留白？请尽可能详细，包括颜色值如果可判断。\")",
+      "Bash(node --check app/src/main/assets/app.js)",
+      "Bash(node --check app/src/main/assets/askAgent.js)",
+      "Bash(node --check \"c:/Users/jpc79/AndroidStudioProjects/Wordbook/app/src/main/assets/icons.js\")",
+      "Bash(node --check grammarKb.js)",
+      "Bash(node --check translator.js)",
+      "Bash(sed -i \"s|require\\('./grammarKb.js'\\)|require\\('c:/Users/jpc79/AndroidStudioProjects/Wordbook/app/src/main/assets/grammarKb.js'\\)|\" /tmp/test_grammarkb.js)",
+      "Bash(node /tmp/test_grammarkb.js)",
+      "Bash(node -e ' *)",
+      "Bash(rm -f /tmp/test_grammarkb.js)",
+      "Bash(node --check app/src/main/assets/grammarKb.js)",
+      "Bash(node --check app/src/main/assets/translator.js)",
+      "Bash(node kb_enum_test.js)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\jpc79\\Documents\\obsidian\\计算机\\wordbook"
+      "C:\\Users\\jpc79\\Documents\\obsidian\\计算机\\wordbook",
+      "\\tmp"
     ]
   }
 }

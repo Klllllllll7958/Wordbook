@@ -2,6 +2,7 @@ package com.example.wordbook
 
 import android.os.Bundle
 import android.util.Log
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -28,6 +29,8 @@ class MainActivity : ComponentActivity() {
         webSettings.displayZoomControls = false
         webSettings.allowUniversalAccessFromFileURLs = true
         webSettings.allowFileAccessFromFileURLs = true
+        // 禁用缓存，避免改 assets 后 WebView 仍用旧 CSS/JS
+        webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

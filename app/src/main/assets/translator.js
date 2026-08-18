@@ -290,6 +290,14 @@ class Translator {
             throw new Error('DeepSeek API密钥未配置');
         }
 
+        const kb = (typeof window !== 'undefined' && window.GrammarKB);
+        if (!kb) {
+            throw new Error('grammarKb.js 未加载，无法分析句子');
+        }
+        const clauseTypeEnum = kb.buildClauseTypeEnumText();
+        const roleEnum = kb.buildRoleEnumText();
+        const ruleContext = kb.buildRuleContext();
+
         const systemPrompt = `你是一个专业的考研英语长难句语法分析专家。分析方法遵循名师拆解体系，必须按以下顺序思考，禁止跳步：
 
 分析步骤：
@@ -318,37 +326,22 @@ class Translator {
 - 主干优先：先保证每个谓语动词的主语、谓语、宾语/表语正确，再标注修饰成分。
 - 插入语（如 says Hofstadter、everyone claims）不是主干，不能当主句谓语。
 - 非谓语（doing/done/to do）不是谓语动词，但可作定语/状语/宾补，按语法功能标角色。
-- that 从句判定：先行词是名词且 that 在从句中作成分 → 定语从句；及物动词后 that 引导完整陈述 → 宾语从句；抽象名词（fact/idea/evidence/risk）后 that 引导完整陈述 → 按修饰关系处理，归入定语从句。
+- that 从句判定：先行词是名词且 that 在从句中作成分 → 定语从句（which-relative）；及物动词后 that 引导完整陈述 → 宾语从句（that-object）；抽象名词（fact/idea/evidence/risk）后 that 引导完整陈述 → 同位语从句（appositive）。
 - 每个从句必须有谓语，主句必须结构完整。若某从句没有谓语，说明切分或标注错误，必须重新思考。
 
 特殊句式处理规则：
 - 虚拟语气：were/had/should 前置是谓语动词，要数进谓语清单；主句 would/could/might + 动词原形构成谓语。按还原后的 If + 主语 + 谓语来标 S/V。
 - 倒装：只把助动词提前的是部分倒装（主语仍在谓语后）；there be、方位词开头的全倒装也一样，先还原主语和谓语的位置再标角色。
 - 强调句：It is ... that 不是"it 作主语 + that 定语从句"；被强调成分按它在原句中的真实角色标注（主语标 S、状语标 Adv），that 后剩余成分按真实角色标注。
-- 独立主格 / with 复合结构 / 比较结构：整体归入 other-clause，内部再标 S/V 等角色。
+- 独立主格 / with 复合结构 → 非谓语短语（non-finite）；比较结构 → 兜底（other-clause）；整体内部再标 S/V 等角色。
+
+${ruleContext}
 
 从句类型(type)枚举（只能选以下）：
-- "main" — 主句
-- "that-object" — that 引导的宾语从句
-- "which-relative" — that/which/who 等引导的定语从句
-- "concessive" — although/though/while 引导的让步状语从句
-- "conditional" — 条件状语从句（if/unless，含虚拟条件句）
-- "cleft" — 强调句（It is ... that）
-- "embedded-object" — 嵌套的宾语从句（省略 that）
-- "inf-purpose" — 不定式目的状语
-- "other-clause" — 其他从句/短语（状语从句、同位语从句、非谓语短语等）
+${clauseTypeEnum}
 
 语法角色(role)枚举（只能选以下）：
-- "S" — 主语
-- "V" — 谓语/系动词
-- "O" — 宾语
-- "C" — 补语/表语/主补/宾补
-- "Attr" — 定语（修饰名词）
-- "Adv" — 状语（修饰动词或整句）
-- "Conj" — 连词/引导词/插入语
-- "Rel" — 关系代词（定语从句中的 that/which/who）
-- "Prep" — 介词短语
-- "" — 无特殊角色（标点、冠词、普通介词等）
+${roleEnum}
 
 示例（输入）：
 The same dramatic technological changes that have provided marketers with more communications choices have also increased the risk that passionate consumers will voice their opinions.
@@ -362,11 +355,59 @@ The same dramatic technological changes that have provided marketers with more c
     {"text": "that have provided marketers with more communications choices", "type": "which-relative", "role": "Attr"},
     {"text": "have also increased", "type": "main", "role": "V"},
     {"text": "the risk", "type": "main", "role": "O"},
-    {"text": "that passionate consumers will voice their opinions", "type": "which-relative", "role": "Attr"}
+    {"text": "that passionate consumers will voice their opinions", "type": "appositive", "role": "Attr"}
   ],
-  "breakdown": "🔵 主句：The same dramatic technological changes (S) + have also increased (V) + the risk (O)，主干 = changes have increased risk。\\n\\n🟠 that定语从句（修饰 changes）：that have provided marketers with more communications choices。\\n\\n🟠 that定语从句（修饰 risk）：that passionate consumers will voice their opinions。\\n\\n🌳 结构树：\\n├─ 主句\\n│  ├─ The same dramatic technological changes (S)\\n│  │  └─ [that定语从句]\\n│  ├─ have also increased (V)\\n│  └─ the risk (O)\\n│     └─ [that定语从句]"
+  "breakdown": "🔵 主句：The same dramatic technological changes (S) + have also increased (V) + the risk (O)，主干 = changes have increased risk。\\n\\n🟠 that定语从句（修饰 changes）：that have provided marketers with more communications choices。\\n\\n🟠 that同位语从句（说明 risk）：that passionate consumers will voice their opinions。\\n\\n🌳 结构树：\\n├─ 主句\\n│  ├─ The same dramatic technological changes (S)\\n│  │  └─ [that定语从句]\\n│  ├─ have also increased (V)\\n│  └─ the risk (O)\\n│     └─ [that同位语从句]"
 }`;
 
+        const cleanResult = (parsed, warnings) => {
+            const result = {
+                translation: parsed.translation || '',
+                segments: parsed.segments || [],
+                breakdown: parsed.breakdown || ''
+            };
+            if (warnings && warnings.length) {
+                result.validationWarnings = warnings;
+            }
+            return result;
+        };
+
+        let lastParsed = null;
+        let lastIssues = [];
+
+        // 最多 2 次：首次 + 1 次重试（重试时携带校验错误，让 LLM 修正）
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const userContent = attempt === 0
+                ? `请分析以下英文句子：\n${sentence}`
+                : `请分析以下英文句子：\n${sentence}\n\n上一次分析存在以下问题，请修正后重新输出完整 JSON：\n- ${lastIssues.join('\n- ')}`;
+
+            try {
+                const parsed = await this._callAnalyzeDeepSeek(systemPrompt, userContent);
+                lastParsed = parsed;
+                lastIssues = kb.validateSegments(sentence, parsed.segments);
+
+                if (lastIssues.length === 0) {
+                    console.log('句子分析校验通过');
+                    return cleanResult(parsed);
+                }
+                console.warn(`句子分析校验未通过（第${attempt + 1}次）:`, lastIssues);
+            } catch (error) {
+                if (lastParsed) {
+                    // 首次已拿到结果但重试请求失败：回退到上次结果
+                    console.warn('句子分析重试请求失败，回退到上次结果:', error.message);
+                    return cleanResult(lastParsed, lastIssues);
+                }
+                throw error;
+            }
+        }
+
+        // 两次均未通过校验：返回最后一次结果，附上校验警告
+        console.warn('句子分析两次均未通过校验，返回带警告的结果');
+        return cleanResult(lastParsed, lastIssues);
+    }
+
+    // 调用 DeepSeek 分析句子，返回解析后的 JSON 对象
+    async _callAnalyzeDeepSeek(systemPrompt, userContent) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000);
 
@@ -381,7 +422,7 @@ The same dramatic technological changes that have provided marketers with more c
                     model: 'deepseek-chat',
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        { role: 'user', content: `请分析以下英文句子：\n${sentence}` }
+                        { role: 'user', content: userContent }
                     ],
                     temperature: 0.3,
                     max_tokens: 2000

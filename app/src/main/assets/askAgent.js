@@ -43,7 +43,7 @@ class AskAgent {
 
     // system prompt：四类口径 + 内容红线 + 输出格式
     _systemPrompt() {
-        return `你是考研英语单词辅导老师。用户就当前卡片上的单词或句子提出开放问题，你要结合给出的卡片语境回答。回答严格限定在当前词/句语境，不做与学习无关的自由对话。
+        return `你是考研英语单词辅导老师。用户就当前卡片上的单词提出开放问题，你要结合给出的卡片语境回答。回答严格限定在当前词/句语境，不做与学习无关的自由对话。
 
 支持的提问类型与回答要点：
 1. 语境词义（"在这里什么意思"）：给出该语境下的义项 + 画面感 + 1-2 个同义替换。
@@ -61,13 +61,41 @@ class AskAgent {
 输出格式：仅用 mini-markdown —— **加粗**、换行、- 列表、| 表格。禁止标题(#)、代码块、编号列表。`;
     }
 
+    // system prompt：长句专属口径（结构拆解/时态语气/指代关系）+ 本地解析的使用
+    _sentenceSystemPrompt() {
+        return `你是考研英语长难句辅导老师。用户就当前句子提出开放问题，你要结合【原句】【中文翻译】【结构解析】【逐层拆解】【语法参考】等给出的语境回答。回答严格限定在当前句子语境，不做与学习无关的自由对话。
+
+支持的提问类型与回答要点：
+1. 结构拆解（"这句话怎么拆解？"）：先给出句子主干（主谓宾），再逐层标注修饰成分——从句、非谓语、插入语、并列结构，说明各成分修饰什么、在句中起什么作用，最后串联整体语义。
+2. 时态语气（"为什么用这个时态/语气？"）：说明时态/语态/虚拟语气/情态动词的选择逻辑，对应原文语境、时间关系或作者意图；必要时对比换成另一种写法会有什么差别。
+3. 指代关系（"这里 it/它/which 指什么？"）：结合就近原则、单复数与语法一致、上下文的语义联系定位先行词/指代对象，并说明判定依据；拿不准时明确说无法确定。
+
+回答结构（通用骨架）：主干定位 → 成分标注 → 结合原文语境解释；指代题追加先行词判定依据。
+
+硬性要求：
+- 不编造语法规则；句式用标准术语（定语从句/状语从句/非谓语等）。
+- 与给出的【结构解析】【逐层拆解】冲突时，以原文句子为准，可指出本地解析的偏差。
+- 回答精炼，不铺陈。
+
+输出格式：仅用 mini-markdown —— **加粗**、换行、- 列表、| 表格。禁止标题(#)、代码块、编号列表。`;
+    }
+
+    // 长句提问入口：使用长句专属 system prompt
+    async askSentence(messages) {
+        return this.ask(messages, this._sentenceSystemPrompt());
+    }
+
     // 单次调用。messages 为完整对话历史（不含 system），此处补上 system 后请求
-    async ask(messages) {
+    // systemPrompt 可选：默认单词口径，长句请走 askSentence
+    async ask(messages, systemPrompt) {
         if (!this.apiKey) {
             throw new Error('DeepSeek API密钥未配置');
         }
 
-        const fullMessages = [{ role: 'system', content: this._systemPrompt() }].concat(messages || []);
+        // 只把 role/content 发给 API（本地历史里的 display 等字段剥离，避免多余字段）
+        const fullMessages = [{ role: 'system', content: systemPrompt || this._systemPrompt() }].concat(
+            (messages || []).map(function(m) { return { role: m.role, content: m.content }; })
+        );
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时

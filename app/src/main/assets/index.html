@@ -371,30 +371,10 @@
                 <div class="empty"></div>
             </div>
 
-            <!-- 单词卡片区域 -->
-            <div class="vocabulary-card-container">
-                <div class="vocabulary-card" id="word-flashcard">
-                    <div class="vocabulary-card-content">
-                        <div class="vocabulary-card-word" id="flashcard-word"></div>
-                        <div class="vocabulary-card-meaning" id="flashcard-meaning"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 导航按钮 -->
-            <div class="vocabulary-navigation">
-                <button id="prev-word-btn" class="vocabulary-nav-btn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span>上一个</span>
-                </button>
-                <button id="next-word-btn" class="vocabulary-nav-btn">
-                    <span>下一个</span>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
+            <!-- 单词列表区域（仅 word 类型文章显示） -->
+            <div class="vocabulary-word-list-container hidden" id="article-word-list-container">
+                <div class="vocabulary-actions" id="article-word-actions"></div>
+                <div class="words-list" id="article-word-list"></div>
             </div>
 
             <!-- 文章原文区域 -->
@@ -414,22 +394,47 @@
                         <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <h2>长句详情</h2>
-                <div class="empty"></div>
+                <!-- 详情/对话 胶囊导航（页头居中） -->
+                <nav class="detail-tabs" id="sentence-detail-tabs">
+                    <div class="detail-tab-bar">
+                        <button class="detail-tab active" type="button" id="sentence-detail-tab-btn">详情</button>
+                        <button class="detail-tab" type="button" id="sentence-ask-tab-btn">对话</button>
+                    </div>
+                </nav>
             </div>
 
-            <div class="section-body sentence-detail-body">
-                <div class="sentence-detail-original" id="sentence-detail-original"></div>
-                <div class="sentence-detail-label"><i class="icon" data-icon="graph" data-size="16"></i> 句子结构解析</div>
-                <div class="review-sentence-text" id="sentence-detail-colored"></div>
-                <div id="sentence-detail-legend" class="sentence-legend"></div>
-                <div class="sentence-detail-label"><i class="icon" data-icon="list-numbers" data-size="16"></i> 逐层拆解</div>
-                <div class="review-sentence-text" id="sentence-detail-breakdown"></div>
-                <div class="sentence-detail-label"><i class="icon" data-icon="tree-structure" data-size="16"></i> 结构树状图</div>
-                <div class="review-sentence-text review-sentence-translation" id="sentence-detail-tree"></div>
-                <div class="sentence-detail-label"><i class="icon" data-icon="note-pencil" data-size="16"></i> 中文翻译</div>
-                <div class="review-sentence-text" id="sentence-detail-translation"></div>
+            <!-- 详情页签：结构解析与翻译 -->
+            <div class="detail-pane" id="sentence-detail-pane">
+                <div class="section-body sentence-detail-body">
+                    <div class="sentence-detail-original" id="sentence-detail-original"></div>
+                    <div class="sentence-detail-label"><i class="icon" data-icon="graph" data-size="16"></i> 句子结构解析</div>
+                    <div class="review-sentence-text" id="sentence-detail-colored"></div>
+                    <div id="sentence-detail-legend" class="sentence-legend"></div>
+                    <div class="sentence-detail-label"><i class="icon" data-icon="list-numbers" data-size="16"></i> 逐层拆解</div>
+                    <div class="review-sentence-text" id="sentence-detail-breakdown"></div>
+                    <div class="sentence-detail-label"><i class="icon" data-icon="tree-structure" data-size="16"></i> 结构树状图</div>
+                    <div class="review-sentence-text review-sentence-translation" id="sentence-detail-tree"></div>
+                    <div class="sentence-detail-label"><i class="icon" data-icon="note-pencil" data-size="16"></i> 中文翻译</div>
+                    <div class="review-sentence-text" id="sentence-detail-translation"></div>
+                </div>
             </div>
+
+            <!-- 对话页签：问它聊天 -->
+            <div class="ask-pane hidden" id="sentence-ask-pane">
+                <div class="ask-pane-header">
+                    <h3 id="sentence-ask-title">问它</h3>
+                    <button class="ask-clear-btn" type="button" id="sentence-ask-clear-btn">清空</button>
+                </div>
+                <div class="ask-sheet-chips" id="sentence-ask-chips"></div>
+                <div class="ask-sheet-messages" id="sentence-ask-messages"></div>
+                <div class="ask-sheet-input">
+                    <div class="ask-input-wrap">
+                        <input id="sentence-ask-input" type="text" placeholder="问这句话…" autocomplete="off">
+                        <button id="sentence-ask-send" type="button" class="ask-send-btn" aria-label="发送"><i class="icon" data-icon="arrow-up" data-size="20"></i></button>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <!-- 单词详情页面 -->
@@ -440,32 +445,50 @@
                         <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <h2>单词详情</h2>
-                <div class="empty"></div>
+                <!-- 详情/对话 胶囊导航（页头居中） -->
+                <nav class="detail-tabs" id="word-detail-tabs">
+                    <div class="detail-tab-bar">
+                        <button class="detail-tab active" type="button" id="word-detail-tab-btn">详情</button>
+                        <button class="detail-tab" type="button" id="word-ask-tab-btn">对话</button>
+                    </div>
+                </nav>
             </div>
 
-            <div class="vocabulary-card-container">
-                <div class="vocabulary-card show-meaning" id="word-detail-card">
-                    <div class="vocabulary-card-content">
-                        <div class="vocabulary-card-word" id="word-detail-word"></div>
-                        <div class="vocabulary-card-meaning" id="word-detail-meaning"></div>
+            <!-- 详情页签：单词卡片与原句 -->
+            <div class="detail-pane" id="word-detail-pane">
+                <div class="vocabulary-card-container">
+                    <div class="vocabulary-card show-meaning" id="word-detail-card">
+                        <div class="vocabulary-card-content">
+                            <div class="vocabulary-card-word" id="word-detail-word"></div>
+                            <div class="vocabulary-card-meaning" id="word-detail-meaning"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="review-sentence-section hidden" id="word-detail-sentence-section">
+                    <div class="review-sentence-label"><i class="icon" data-icon="note-pencil" data-size="16"></i> 原句</div>
+                    <div class="review-sentence-text" id="word-detail-sentence"></div>
+                    <div class="review-sentence-label"><i class="icon" data-icon="translate" data-size="16"></i> 翻译</div>
+                    <div class="review-sentence-text review-sentence-translation" id="word-detail-sentence-translation"></div>
+                </div>
+            </div>
+
+            <!-- 对话页签：问它聊天 -->
+            <div class="ask-pane hidden" id="word-ask-pane">
+                <div class="ask-pane-header">
+                    <h3 id="ask-sheet-title">问它</h3>
+                    <button class="ask-clear-btn" type="button" id="ask-clear-btn">清空</button>
+                </div>
+                <div class="ask-sheet-chips" id="ask-sheet-chips"></div>
+                <div class="ask-sheet-messages" id="ask-sheet-messages"></div>
+                <div class="ask-sheet-input">
+                    <div class="ask-input-wrap">
+                        <input id="ask-sheet-input" type="text" placeholder="问这个词…" autocomplete="off">
+                        <button id="ask-sheet-send" type="button" class="ask-send-btn" aria-label="发送"><i class="icon" data-icon="arrow-up" data-size="20"></i></button>
                     </div>
                 </div>
             </div>
 
-            <div class="review-sentence-section hidden" id="word-detail-sentence-section">
-                <div class="review-sentence-label"><i class="icon" data-icon="note-pencil" data-size="16"></i> 原句</div>
-                <div class="review-sentence-text" id="word-detail-sentence"></div>
-                <div class="review-sentence-label"><i class="icon" data-icon="translate" data-size="16"></i> 翻译</div>
-                <div class="review-sentence-text review-sentence-translation" id="word-detail-sentence-translation"></div>
-            </div>
-
-            <!-- 问它入口 -->
-            <div class="ask-it-wrap">
-                <button id="ask-it-btn" type="button" class="btn-secondary ask-it-btn">
-                    <i class="icon" data-icon="note-pencil" data-size="16"></i> 问它：这个词为什么这么用？
-                </button>
-            </div>
         </section>
     </main>
 
@@ -506,46 +529,9 @@
         </nav>
     </footer>
 
-    <!-- 问它提问面板（底部弹层） -->
-    <div class="ask-sheet-overlay" id="ask-sheet-overlay"></div>
-    <div class="ask-sheet" id="ask-sheet">
-        <div class="ask-sheet-header">
-            <h3 id="ask-sheet-title">问它</h3>
-            <button id="ask-sheet-close" type="button" class="close-btn" title="关闭" aria-label="关闭">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </div>
-        <div class="ask-sheet-chips" id="ask-sheet-chips"></div>
-        <div class="ask-sheet-messages" id="ask-sheet-messages"></div>
-        <div class="ask-sheet-input">
-            <input id="ask-sheet-input" type="text" placeholder="问这个词…" autocomplete="off">
-            <button id="ask-sheet-send" type="button" class="btn-primary">发送</button>
-        </div>
-    </div>
-
-    <!-- 长句问它提问面板（底部弹层） -->
-    <div class="ask-sheet-overlay" id="sentence-ask-overlay"></div>
-    <div class="ask-sheet" id="sentence-ask-sheet">
-        <div class="ask-sheet-header">
-            <h3 id="sentence-ask-title">长句</h3>
-            <button id="sentence-ask-close" type="button" class="close-btn" title="关闭" aria-label="关闭">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </div>
-        <div class="ask-sheet-chips" id="sentence-ask-chips"></div>
-        <div class="ask-sheet-messages" id="sentence-ask-messages"></div>
-        <div class="ask-sheet-input">
-            <input id="sentence-ask-input" type="text" placeholder="问这句话…" autocomplete="off">
-            <button id="sentence-ask-send" type="button" class="btn-primary">发送</button>
-        </div>
-    </div>
-
     <script src="dictionary.js"></script>
     <script src="icons.js"></script>
+    <script src="grammarKb.js"></script>
     <script src="translator.js"></script>
     <script src="grammar.js"></script>
     <script src="askAgent.js"></script>

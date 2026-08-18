@@ -290,6 +290,20 @@ i.icon[data-icon] {
     background: #f5f5f5;
 }
 
+/* 单词/长句详情页头：透明无背景、无下边框（页头 = 返回键 + 胶囊导航） */
+#word-detail-section .section-header,
+#sentence-detail-section .section-header {
+    background-color: transparent;
+    border-bottom: none;
+    padding-bottom: 8px;
+}
+
+/* 详情页底部导航已移到页头，底部留白相应减小 */
+#word-detail-section,
+#sentence-detail-section {
+    padding-bottom: 24px;
+}
+
 .section-header h2 {
     font-size: 20px;
     font-weight: 600;
@@ -1382,6 +1396,11 @@ input[type="text"]:focus, input[type="password"]:focus {
     transform: translateY(-2px);
 }
 
+/* word 类型文章的单词列表容器 */
+.vocabulary-word-list-container {
+    padding: 8px 20px 24px;
+}
+
 /* 单词列表 */
 .words-list {
     display: flex;
@@ -1712,46 +1731,6 @@ input[type="text"]:focus, input[type="password"]:focus {
 @keyframes swipeInFromLeft {
     0%   { transform: translateX(-130%); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
-}
-
-.vocabulary-navigation {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 0 20px 24px;
-    max-width: 480px;
-    margin: 0 auto;
-}
-
-.vocabulary-nav-btn {
-    flex: 1;
-    background: none;
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 16px 24px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.vocabulary-nav-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    transform: translateY(-2px);
-}
-
-.vocabulary-nav-btn:active {
-    transform: translateY(0);
-}
-
-.vocabulary-nav-btn svg {
-    stroke: var(--primary-color);
 }
 
 /* 复习进度文字 */
@@ -2239,7 +2218,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* 长句详情页 */
 .sentence-detail-body {
-    padding: 0 20px 40px;
+    padding: 16px 20px 40px;
     max-width: 800px;
     margin: 0 auto;
 }
@@ -2249,10 +2228,11 @@ input[type="text"]:focus, input[type="password"]:focus {
     line-height: 1.9;
     color: var(--text-primary);
     background: #fff;
-    border: 1px solid var(--border-color);
-    padding: 16px;
-    border-radius: var(--border-radius);
+    border: 1px solid #e0e0e0;
+    padding: 28px;
+    border-radius: 24px;
     margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .sentence-detail-label {
@@ -2283,11 +2263,15 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* ========== 句子结构颜色体系 ========== */
 /*
-  9 种语法类型按功能分 5 组:
+  16 种语法类型按功能分组:
   主干: main
-  名词性: that-object / embedded-object (同色系, 深浅表嵌套)
+  名词性: that-object / embedded-object / subject-clause / predicative-clause
+  同位语: appositive
   形容词性: which-relative
-  副词性: concessive / conditional / inf-purpose
+  副词性: adverbial / concessive / conditional / inf-purpose
+  不定式宾补: inf-object
+  非谓语: non-finite
+  引述插入: reporting-insert
   特殊/兜底: cleft / other-clause
 */
 
@@ -2302,7 +2286,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 /* ── 句子结构颜色体系 — 全部 oklch，与蓝色主题统一 ── */
-/* 9 种语法类型均用 bg≈96% / text≈38% / border≈72% 的同一结构，仅色相不同 */
+/* 16 种语法类型均用 bg≈96% / text≈38% / border≈72% 的同一结构，仅色相不同 */
 
 /* 主干 (Blue — 主题蓝) */
 .sentence-segment.type-main { background: #E0F7FE; color: #0284C7; border-bottom: 2px solid #1CB0F6; }
@@ -2311,13 +2295,30 @@ input[type="text"]:focus, input[type="password"]:focus {
 .sentence-segment.type-that-object     { background: oklch(96% 0.015 200); color: oklch(38% 0.14 205); border-bottom: 2px solid oklch(72% 0.14 200); }
 .sentence-segment.type-embedded-object { background: oklch(94% 0.025 195); color: oklch(35% 0.15 198); border-bottom: 2px solid oklch(65% 0.16 195); }
 
+/* 名词性从句: 主语/表语从句 (Blue→Indigo) */
+.sentence-segment.type-subject-clause     { background: oklch(96% 0.015 260); color: oklch(38% 0.15 265); border-bottom: 2px solid oklch(70% 0.15 260); }  /* Blue   */
+.sentence-segment.type-predicative-clause { background: oklch(96% 0.015 285); color: oklch(36% 0.16 290); border-bottom: 2px solid oklch(70% 0.16 285); }  /* Indigo */
+
 /* 形容词性 / 定语从句 (Orange — 暖橙) */
 .sentence-segment.type-which-relative { background: oklch(96% 0.018 65); color: oklch(40% 0.17 55); border-bottom: 2px solid oklch(75% 0.16 60); }
+
+/* 同位语 (Purple) */
+.sentence-segment.type-appositive { background: oklch(96% 0.015 320); color: oklch(38% 0.17 325); border-bottom: 2px solid oklch(70% 0.17 320); }
 
 /* 副词性从句: 冷色系, 各不同相 */
 .sentence-segment.type-concessive  { background: oklch(96% 0.015 300); color: oklch(35% 0.16 290); border-bottom: 2px solid oklch(70% 0.16 295); }  /* Violet  */
 .sentence-segment.type-conditional { background: oklch(96% 0.015 10);  color: oklch(38% 0.17 20);  border-bottom: 2px solid oklch(70% 0.17 15);  }  /* Rose    */
+.sentence-segment.type-adverbial   { background: oklch(96% 0.015 140); color: oklch(38% 0.13 145); border-bottom: 2px solid oklch(70% 0.13 140); }  /* Green   */
 .sentence-segment.type-inf-purpose { background: oklch(96% 0.015 230); color: oklch(40% 0.15 235); border-bottom: 2px solid oklch(73% 0.15 235); }  /* Sky     */
+
+/* 不定式宾补 (Sky, 与 inf-purpose 同族) */
+.sentence-segment.type-inf-object { background: oklch(96% 0.015 215); color: oklch(40% 0.15 220); border-bottom: 2px solid oklch(73% 0.15 215); }
+
+/* 非谓语短语 (Teal-green) */
+.sentence-segment.type-non-finite { background: oklch(96% 0.015 165); color: oklch(38% 0.13 170); border-bottom: 2px solid oklch(70% 0.13 165); }
+
+/* 引述插入句 (Amber) */
+.sentence-segment.type-reporting-insert { background: oklch(96% 0.015 45); color: oklch(38% 0.15 50); border-bottom: 2px solid oklch(70% 0.15 45); }
 
 /* 特殊结构 (Pink) */
 .sentence-segment.type-cleft { background: oklch(96% 0.015 350); color: oklch(38% 0.17 345); border-bottom: 2px solid oklch(70% 0.17 350); }
@@ -2355,10 +2356,17 @@ input[type="text"]:focus, input[type="password"]:focus {
 .sentence-legend-swatch.sw-main             { background: #E0F7FE; border-bottom: 2px solid #1CB0F6; }
 .sentence-legend-swatch.sw-that-object      { background: oklch(96% 0.015 200); border-bottom: 2px solid oklch(72% 0.14 200); }
 .sentence-legend-swatch.sw-embedded-object  { background: oklch(94% 0.025 195); border-bottom: 2px solid oklch(65% 0.16 195); }
+.sentence-legend-swatch.sw-subject-clause     { background: oklch(96% 0.015 260); border-bottom: 2px solid oklch(70% 0.15 260); }
+.sentence-legend-swatch.sw-predicative-clause { background: oklch(96% 0.015 285); border-bottom: 2px solid oklch(70% 0.16 285); }
 .sentence-legend-swatch.sw-which-relative   { background: oklch(96% 0.018 65);  border-bottom: 2px solid oklch(75% 0.16 60);  }
+.sentence-legend-swatch.sw-appositive       { background: oklch(96% 0.015 320); border-bottom: 2px solid oklch(70% 0.17 320); }
 .sentence-legend-swatch.sw-concessive       { background: oklch(96% 0.015 300); border-bottom: 2px solid oklch(70% 0.16 295); }
 .sentence-legend-swatch.sw-conditional      { background: oklch(96% 0.015 10);  border-bottom: 2px solid oklch(70% 0.17 15);  }
+.sentence-legend-swatch.sw-adverbial        { background: oklch(96% 0.015 140); border-bottom: 2px solid oklch(70% 0.13 140); }
 .sentence-legend-swatch.sw-inf-purpose      { background: oklch(96% 0.015 230); border-bottom: 2px solid oklch(73% 0.15 235); }
+.sentence-legend-swatch.sw-inf-object       { background: oklch(96% 0.015 215); border-bottom: 2px solid oklch(73% 0.15 215); }
+.sentence-legend-swatch.sw-non-finite       { background: oklch(96% 0.015 165); border-bottom: 2px solid oklch(70% 0.13 165); }
+.sentence-legend-swatch.sw-reporting-insert { background: oklch(96% 0.015 45);  border-bottom: 2px solid oklch(70% 0.15 45);  }
 .sentence-legend-swatch.sw-cleft            { background: oklch(96% 0.015 350); border-bottom: 2px solid oklch(70% 0.17 350); }
 .sentence-legend-swatch.sw-other-clause     { background: oklch(97% 0.005 90);  border-bottom: 2px solid oklch(75% 0.02 85);  }
 
@@ -2512,19 +2520,10 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* ========== 问它功能 ========== */
 
-.ask-it-wrap {
-    padding: 12px 24px 20px;
-}
-
-.ask-it-btn {
-    width: 100%;
-    justify-content: center;
-}
-
-/* 详情页词汇卡片：可点击进入问它 + 动效 */
+/* 详情页词汇卡片：点击切换到对话页签 + 动效 */
 #word-detail-card {
     cursor: pointer;
-    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, opacity 0.3s ease;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
 }
 
 #word-detail-card:hover {
@@ -2537,94 +2536,146 @@ input[type="text"]:focus, input[type="password"]:focus {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
-/* 弹层打开时卡片轻微上浮缩小，营造纵深让位 */
-#word-detail-card.ask-float {
-    transform: translateY(-20px) scale(0.95);
-    opacity: 0.85;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-/* 长句详情卡：可点击进入长句问它 + 动效 */
+/* 长句详情卡：点击切换到对话页签 + 动效 */
 .sentence-detail-original {
     cursor: pointer;
-    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, opacity 0.3s ease;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
 }
 
 .sentence-detail-original:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
 }
 
 .sentence-detail-original:active {
-    transform: scale(0.98);
+    transform: translateY(-1px) scale(0.97);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
-.sentence-detail-original.ask-float {
-    transform: translateY(-16px) scale(0.97);
-    opacity: 0.88;
+/* 详情/对话 胶囊导航（在页头内居中）
+   参考图片：分段胶囊控件 —— 浅灰轨道 + 白色选中胶囊 + 细描边 */
+.detail-tabs {
+    justify-self: center;
+    min-width: 0;
 }
 
-/* 底部弹层遮罩 */
-.ask-sheet-overlay {
+.detail-tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: min(173px, 37vw);
+    max-width: 100%;
+    padding: 4px;
+    background-color: #ececec;
+    border: 1px solid #e2e2e2;
+    border-radius: 999px;
+}
+
+.detail-tab {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    border-radius: 999px;
+    transition: var(--transition);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.detail-tab:hover {
+    color: var(--text-primary);
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.detail-tab.active {
+    background-color: var(--card-background);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* 详情/对话 横滑切换：两个页签叠放，用 translateX 跟手平移
+   touch-action: pan-y 让竖向滚动交给浏览器，横向手势交给 JS */
+.detail-pane,
+.ask-pane {
+    touch-action: pan-y;
+    will-change: transform;
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+    z-index: 30;
+}
+
+/* 手指滑动中：禁用过渡，位置完全跟手 */
+.detail-pane.swiping,
+.ask-pane.swiping {
+    transition: none;
+}
+
+/* 详情页签（固定在详情页头下方，延伸到底部安全区上方，内部滚动） */
+.detail-pane {
     position: fixed;
-    top: 0;
+    top: calc(60px + var(--sb-top));
     left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 210;
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.35s ease;
-}
-
-.ask-sheet-overlay.show {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.ask-sheet {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    height: 100dvh;
+    right: 0;
+    bottom: var(--sb-bottom);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     background-color: var(--background-color);
-    z-index: 211;
+}
+
+/* 对话页签：问它聊天（固定在详情页头下方，延伸到底部安全区上方） */
+.ask-pane {
+    position: fixed;
+    top: calc(60px + var(--sb-top));
+    left: 0;
+    right: 0;
+    bottom: var(--sb-bottom);
+    background-color: var(--background-color);
     display: flex;
     flex-direction: column;
-    transform: translateY(100%);
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: transform;
 }
 
-.ask-sheet.show {
-    transform: translateY(0);
-}
-
-.ask-sheet-header {
+.ask-pane-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 40px 20px 16px; /* 顶部留白避开系统状态栏 */
-    background-color: var(--primary-color);
-    color: white;
+    padding: 12px 16px;
+    background-color: var(--card-background);
+    border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
-.ask-sheet-header h3 {
-    font-size: 17px;
-    font-weight: 600;
+.ask-pane-header h3 {
     margin: 0;
-    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
     flex: 1;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.ask-clear-btn {
+    flex-shrink: 0;
+    margin-left: 8px;
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.ask-clear-btn:hover {
+    color: var(--text-primary);
+    background-color: rgba(0, 0, 0, 0.04);
 }
 
 .ask-sheet-chips {
@@ -2720,30 +2771,67 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .ask-sheet-input {
+    /* 底栏已删除：无背景、无上边框，只保留胶囊输入框浮在底部 */
     display: flex;
-    gap: 10px;
+    align-items: center;
     padding: 12px 16px;
-    background-color: var(--card-background);
-    border-top: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
-.ask-sheet-input input {
+/* 椭圆输入框容器：透明背景 + 描边 + 阴影；发送按钮作为子项嵌在右侧内部 */
+.ask-input-wrap {
+    position: relative;
     flex: 1;
-    padding: 10px 14px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 5px 5px 18px;
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
+    border-radius: 999px;
+    background-color: transparent;  /* 无背景 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ask-input-wrap:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 12px rgba(14, 165, 233, 0.18);
+}
+
+.ask-input-wrap input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 0;
+    margin: 0;
+    border: none;
+    background: transparent;
     font-size: 14px;
     outline: none;
-    background-color: var(--background-color);
     color: var(--text-primary);
 }
 
-.ask-sheet-input input:focus {
-    border-color: var(--primary-color);
+/* 圆形箭头发送按钮：嵌在椭圆输入框右侧内部，flex 天然垂直居中 */
+.ask-send-btn {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #fff;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35);
 }
 
-.ask-sheet-input .btn-primary {
-    flex-shrink: 0;
-    padding: 10px 20px;
+.ask-send-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.ask-send-btn:active {
+    transform: scale(0.92);
 }
